@@ -17,6 +17,18 @@ impl<const D: Udim> Internal<D> {
     // const DIM: usize = D;
     const DIM_LEN: usize = 2_usize.pow(D as u32);
 
+    pub fn get_bb(&self) -> &BoundBox<D> {
+        &self.bb
+    }
+
+    pub fn get_count(&self) -> usize {
+        self.count.clone()
+    }
+
+    pub fn get_vc(&self) -> &ColVec<D> {
+        &self.vc
+    }
+
     pub fn calc_next_dir(&self, vc: &ColVec<D>) -> usize {
         self.bb.calc_next_dir(vc)
     }

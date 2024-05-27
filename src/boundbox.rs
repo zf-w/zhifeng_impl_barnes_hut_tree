@@ -25,6 +25,14 @@ impl<const D: Udim> BoundBox<D> {
         }
     }
 
+    pub fn get_bc(&self) -> &ColVec<D> {
+        &self.bc
+    }
+
+    pub fn get_br(&self) -> &Fnum {
+        &self.br
+    }
+
     pub fn calc_next_dir(&self, vc: &ColVec<D>) -> usize {
         let m: usize = 1 << (Self::DIM - 1);
         let mut ans = 0;

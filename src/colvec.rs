@@ -18,6 +18,14 @@ impl<const D: Udim> ColVec<D> {
         Self { data }
     }
 
+    pub fn new_with_runtime_arr(arr: &[Fnum]) -> Self {
+        let mut data: [Fnum; D] = [0.0; D];
+        for (val0, val1) in data.iter_mut().zip(arr.iter()) {
+            *val0 = *val1;
+        }
+        Self { data }
+    }
+
     // pub fn set_from_sub(&mut self, a: &Self, b: &Self) -> Fnum {
     //     let mut length: Fnum = 0.0;
     //     for i in 0..D {
@@ -27,6 +35,19 @@ impl<const D: Udim> ColVec<D> {
     //     }
     //     length
     // }
+
+    pub fn inside(&self) -> &[Fnum; D] {
+        &self.data
+    }
+
+    pub fn add_from_arr(&mut self, other: &[Fnum; D]) {
+        for i in 0..D {
+            self.data[i] += other[i];
+            if self.data[i].is_infinite() {
+                panic!("!!!")
+            }
+        }
+    }
 
     pub fn add_vec_to_self(&mut self, other: &Self) {
         for i in 0..D {
@@ -43,14 +64,26 @@ impl<const D: Udim> ColVec<D> {
         }
     }
 
-    // pub fn mul_scalar(&mut self, s: Fnum) {
-    //     if s.is_infinite() || s.is_nan() {
-    //         return;
-    //     }
-    //     for i in 0..D {
-    //         self.data[i] *= s;
-    //     }
-    // }
+    pub fn mul_scalar(&mut self, s: Fnum) {
+        if s.is_infinite() || s.is_nan() {
+            return;
+        }
+        for i in 0..D {
+            self.data[i] *= s;
+        }
+    }
+
+    pub fn norm2(&self, other: &[Fnum]) -> Fnum {
+        let mut dis = 0.0;
+        for (val0, val1) in self.data.iter().zip(other.iter()) {
+            if val0 > val1 {
+                dis += (val0 - val1).powi(2);
+            } else if val0 < val1 {
+                dis += (val1 - val0).powi(2);
+            }
+        }
+        dis
+    }
 
     // pub fn set_all(&mut self, val: Fnum) {
     //     for curr in self.data.iter_mut() {
