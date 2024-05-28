@@ -5,29 +5,17 @@ use crate::{boundbox::BoundBox, colvec::ColVec, Udim};
 use super::{Leaf, NodePtr};
 
 pub struct Internal<const D: Udim> {
-    parent: Option<(*mut Self, usize)>,
-    nexts: Vec<Option<NodePtr<D>>>,
+    pub(crate) parent: Option<(*mut Self, usize)>,
+    pub(crate) nexts: Vec<Option<NodePtr<D>>>,
 
-    count: usize,
-    vc: ColVec<D>,
-    bb: BoundBox<D>,
+    pub(crate) count: usize,
+    pub(crate) vc: ColVec<D>,
+    pub(crate) bb: BoundBox<D>,
 }
 
 impl<const D: Udim> Internal<D> {
     // const DIM: usize = D;
     const DIM_LEN: usize = 2_usize.pow(D as u32);
-
-    pub fn get_bb(&self) -> &BoundBox<D> {
-        &self.bb
-    }
-
-    pub fn get_count(&self) -> usize {
-        self.count.clone()
-    }
-
-    pub fn get_vc(&self) -> &ColVec<D> {
-        &self.vc
-    }
 
     pub fn calc_next_dir(&self, vc: &ColVec<D>) -> usize {
         self.bb.calc_next_dir(vc)
@@ -46,20 +34,44 @@ impl<const D: Udim> Internal<D> {
         ptr::addr_of_mut!(self.nexts[*dir])
     }
 
-    pub fn get_nexts(&self) -> &[Option<NodePtr<D>>] {
-        &self.nexts
+    pub fn calc_new_internal_with_new_vc(&self, vc: &ColVec<D>) -> (Box<Self>, usize) {
+        let (new_bb, dir) = self.bb.calc_reverse_expand_bb(vc);
+
+        (
+            Box::new(Self::new_empty_with_vc_and_bb(
+                new_bb,
+                self.vc.clone(),
+                self.count,
+            )),
+            dir,
+        )
+    }
+
+    pub fn new_empty_with_vc_and_bb(bb: BoundBox<D>, vc: ColVec<D>, count: usize) -> Self {
+        let parent: Option<(*mut Internal<D>, usize)> = None;
+        let mut nexts = Vec::with_capacity(Self::DIM_LEN);
+        for _ in 0..Self::DIM_LEN {
+            nexts.push(None);
+        }
+        Self {
+            bb,
+            parent,
+            nexts,
+            count,
+            vc,
+        }
     }
 
     pub fn new_with_leaf_replacement(leaf: *mut Leaf<D>) -> Box<Self> {
         let leaf_ref = unsafe { leaf.as_mut().expect("The leaf node to replace") };
-        let bb = leaf_ref.get_bb().clone();
+        let bb = leaf_ref.bb.clone();
         let parent = leaf_ref.get_parent();
-        let next_dir = bb.calc_next_dir(leaf_ref.get_vc());
+        let next_dir = bb.calc_next_dir(&leaf_ref.vc);
         let mut curr = Internal::new_root(bb);
         let next_ptr = curr.get_child_star_mut(&next_dir);
         let next_ref = unsafe { next_ptr.as_mut().expect("The leaf's next position") };
         *next_ref = Some(NodePtr::Le(leaf));
-        curr.add_vc(leaf_ref.get_vc());
+        curr.add_vc(&leaf_ref.vc);
         curr.parent = parent;
         let mut curr_box = Box::new(curr);
         leaf_ref.set_parent(ptr::addr_of_mut!(*curr_box), &next_dir);

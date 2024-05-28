@@ -13,6 +13,7 @@ pub struct BHTreeSerde<const D: Udim> {
     bcs: Vec<Fnum>,
     brs: Vec<Fnum>,
     ns: Vec<usize>,
+    parents: Vec<Option<usize>>,
     from_dirs: Vec<Option<usize>>,
 }
 
@@ -23,6 +24,7 @@ impl<const D: Udim> BHTreeSerde<D> {
         let brs: Vec<Fnum> = Vec::with_capacity(num);
         let ns: Vec<usize> = Vec::with_capacity(num);
         let from_dirs: Vec<Option<usize>> = Vec::with_capacity(num);
+        let parents: Vec<Option<usize>> = Vec::with_capacity(num);
         BHTreeSerde {
             num,
             dim: D,
@@ -30,6 +32,7 @@ impl<const D: Udim> BHTreeSerde<D> {
             bcs,
             brs,
             ns,
+            parents,
             from_dirs,
         }
     }
@@ -44,6 +47,8 @@ impl<const D: Udim> BHTreeSerde<D> {
         n: usize,
     ) -> usize {
         let curr_i = self.ns.len();
+
+        self.parents.push(parent_opt);
 
         self.from_dirs.push(from_dir);
 
@@ -81,9 +86,9 @@ impl<const D: Udim> BHTree<D> {
             ans.add_node(
                 parent_opt,
                 from_dir,
-                leaf_ref.get_vc().inside(),
-                leaf_ref.get_bb().get_bc().inside(),
-                leaf_ref.get_bb().get_br().clone(),
+                leaf_ref.vc.inside(),
+                leaf_ref.bb.bc.inside(),
+                leaf_ref.bb.br.clone(),
                 1,
             );
         }
@@ -109,12 +114,12 @@ impl<const D: Udim> BHTree<D> {
             let curr_i = ans.add_node(
                 parent_opt,
                 from_dir,
-                curr_ref.get_vc().inside(),
-                curr_ref.get_bb().get_bc().inside(),
-                curr_ref.get_bb().get_br().clone(),
-                curr_ref.get_count(),
+                curr_ref.vc.inside(),
+                curr_ref.bb.bc.inside(),
+                curr_ref.bb.br.clone(),
+                curr_ref.count,
             );
-            for (from_dir, next) in curr_ref.get_nexts().iter().enumerate() {
+            for (from_dir, next) in curr_ref.nexts.iter().enumerate() {
                 match next {
                     Some(NodePtr::In(next_box_ref)) => {
                         dq.push_back((ptr::addr_of!(**next_box_ref), Some((curr_i, from_dir))));

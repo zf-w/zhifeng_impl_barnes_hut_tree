@@ -12,9 +12,9 @@ impl<const D: Udim> BHTree<D> {
 
         let leaf_ref = unsafe { leaf_ptr.as_mut().expect("Should work") };
 
-        let leaf_vc = leaf_ref.get_vc();
+        let leaf_vc = &leaf_ref.vc;
 
-        // self.expand_root(leaf_vc);
+        self.expand_root(leaf_vc);
 
         let (curr_ptr, prev_internal) = self.find_pointer_to_add_with_prev_internal(leaf_vc);
 
@@ -25,7 +25,7 @@ impl<const D: Udim> BHTree<D> {
         if let Some((parent_ptr, dir)) = prev_internal {
             leaf_ref.set_parent(parent_ptr, &dir);
         } else {
-            leaf_ref.set_bb(&self.bb);
+            leaf_ref.bb.clone_from(&self.bb);
         }
     }
 }

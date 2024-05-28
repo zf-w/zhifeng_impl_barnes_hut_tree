@@ -7,8 +7,8 @@ use super::Internal;
 pub struct Leaf<const D: Udim> {
     parent: Option<(*mut Internal<D>, usize)>,
 
-    bb: BoundBox<D>,
-    vc: ColVec<D>,
+    pub(crate) bb: BoundBox<D>,
+    pub(crate) vc: ColVec<D>,
 }
 
 impl<const D: Udim> Leaf<D> {
@@ -21,14 +21,6 @@ impl<const D: Udim> Leaf<D> {
             vc,
             bb: BoundBox::new_zeros(),
         }
-    }
-
-    pub fn get_vc(&self) -> &ColVec<D> {
-        &self.vc
-    }
-
-    pub fn set_bb(&mut self, bb: &BoundBox<D>) {
-        self.bb.clone_from(bb);
     }
 
     pub fn set_parent(&mut self, parent: *mut Internal<D>, i: &usize) {
@@ -47,10 +39,6 @@ impl<const D: Udim> Leaf<D> {
 
     pub fn get_parent(&self) -> Option<(*mut Internal<D>, usize)> {
         self.parent
-    }
-
-    pub fn get_bb(&self) -> &BoundBox<D> {
-        &self.bb
     }
 
     // pub fn cal_self_box(&self) -> Option<BoundBox<D>> {
