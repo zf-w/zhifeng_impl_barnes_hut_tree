@@ -1,6 +1,6 @@
 use std::ptr;
 
-use crate::{nodes::NodePtr::Le, BHTree, Udim};
+use crate::{nodes::NodeBox::Le, BHTree, Udim};
 
 impl<const D: Udim> BHTree<D> {
     /// # Remove a node from the tree

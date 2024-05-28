@@ -1,63 +1,52 @@
-use std::fmt::Display;
+use std::ptr;
 
 use crate::{boundbox::BoundBox, colvec::ColVec, Udim};
 
 use super::Internal;
 
 pub struct Leaf<const D: Udim> {
-    parent: Option<(*mut Internal<D>, usize)>,
+    pub(crate) parent: Option<(*mut Internal<D>, usize)>,
 
     pub(crate) bb: BoundBox<D>,
+
     pub(crate) vc: ColVec<D>,
+    pub(crate) vs: Vec<*const ColVec<D>>,
 }
 
 impl<const D: Udim> Leaf<D> {
-    // const DIM: usize = D;
-    // const DIM_LEN: usize = 2_usize.pow(D as u32);
-
-    pub fn new_leaf(vc: ColVec<D>) -> Self {
-        Self {
-            parent: None,
-            vc,
-            bb: BoundBox::new_zeros(),
-        }
+    pub fn new_empty_from_bb(bb: BoundBox<D>) -> Box<Self> {
+        let vc: ColVec<D> = ColVec::new_zeros();
+        let vs: Vec<*const ColVec<D>> = Vec::with_capacity(1);
+        let parent = None;
+        Box::new(Self { parent, bb, vc, vs })
     }
 
-    pub fn set_parent(&mut self, parent: *mut Internal<D>, i: &usize) {
-        let parent_ref = unsafe { parent.as_ref().expect("Parent node of the leaf") };
-        self.parent = Some((parent, i.clone()));
-        self.bb.clone_from(&parent_ref.calc_child_bb(i));
+    pub fn new_empty_from_parent_dir(parent: &mut Internal<D>, dir: usize) -> Box<Self> {
+        let bb = parent.calc_child_bb(&dir);
+
+        let vc: ColVec<D> = ColVec::new_zeros();
+        let vs: Vec<*const ColVec<D>> = Vec::with_capacity(1);
+        let parent = Some((ptr::addr_of_mut!(*parent), dir));
+        Box::new(Self { parent, bb, vc, vs })
     }
 
-    // pub fn break_parent(&mut self) {
-    //     self.parent = None;
-    // }
-
-    // pub fn has_parent(&self) -> bool {
-    //     self.parent.is_some()
-    // }
-
-    pub fn get_parent(&self) -> Option<(*mut Internal<D>, usize)> {
-        self.parent
+    pub fn add_value(&mut self, v: &ColVec<D>) -> usize {
+        let i = self.vs.len();
+        self.vc.add_colvec_to_self(v);
+        self.vs.push(ptr::addr_of!(*v));
+        i
     }
 
-    // pub fn cal_self_box(&self) -> Option<BoundBox<D>> {
-    //     if let Some((parent, dir)) = self.parent {
-    //         Some(unsafe {
-    //             parent
-    //                 .as_ref()
-    //                 .expect("Parent should be able to deref")
-    //                 .calc_child_bb(&dir)
-    //         })
-    //     } else {
-    //         None
-    //     }
-    // }
-}
+    pub fn set_parent(&mut self, parent_ptr: *mut Internal<D>, from_dir: usize) {
+        self.parent = Some((parent_ptr, from_dir));
 
-impl<const D: Udim> Display for Leaf<D> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("vc: {}, bb: {}", self.vc, self.bb))?;
-        Ok(())
+        let parent_ref = unsafe {
+            parent_ptr
+                .as_ref()
+                .expect("Dereferencing parent_ptr to update bounding box")
+        };
+
+        self.bb
+            .set_self_from_parent_bb_and_dir(&parent_ref.bb, from_dir);
     }
 }

@@ -13,7 +13,7 @@ impl<const D: Udim> BoundBox<D> {
 
     pub fn new_zeros() -> Self {
         Self {
-            bc: ColVec::new(),
+            bc: ColVec::new_zeros(),
             br: 0.0,
         }
     }
@@ -82,6 +82,18 @@ impl<const D: Udim> BoundBox<D> {
             }
         }
         true
+    }
+
+    pub fn set_self_from_parent_bb_and_dir(&mut self, parent_bb: &Self, dir: usize) {
+        self.bc = parent_bb.bc.clone();
+        let ans_r = parent_bb.br * 0.5;
+
+        let mask: usize = 1 << (Self::DIM - 1);
+        for d in 0..D {
+            let curr_mask = mask >> d;
+            self.bc.data[d] += if (dir & curr_mask) > 0 { ans_r } else { -ans_r };
+        }
+        self.br = ans_r;
     }
 }
 

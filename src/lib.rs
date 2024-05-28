@@ -9,17 +9,25 @@ mod boundbox;
 use boundbox::BoundBox;
 
 mod nodes;
-use nodes::{Leaf, NodePtr};
+use nodes::{Leaf, NodeBox};
 
+/// # Zhifeng's implementation of Barnes-Hut Tree
 pub struct BHTree<const D: Udim> {
-    leaf_refs: Vec<Box<Leaf<D>>>,
-    root: Option<NodePtr<D>>,
+    vs: Vec<ColVec<D>>,
+    to_leafs: Vec<Option<(*mut Leaf<D>, usize)>>,
+
+    root: Option<NodeBox<D>>,
 
     count: usize,
     bb: BoundBox<D>,
+
+    br_limit: Fnum,
 }
 
 mod imple;
 
 #[cfg(feature = "deserial")]
 mod deserial;
+
+#[cfg(feature = "deserial")]
+pub use deserial::BHTreeSer;

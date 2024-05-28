@@ -2,11 +2,11 @@ use std::{fmt::Display, ptr};
 
 use crate::{boundbox::BoundBox, colvec::ColVec, Udim};
 
-use super::{Leaf, NodePtr};
+use super::{Leaf, NodeBox};
 
 pub struct Internal<const D: Udim> {
     pub(crate) parent: Option<(*mut Self, usize)>,
-    pub(crate) nexts: Vec<Option<NodePtr<D>>>,
+    pub(crate) nexts: Vec<Option<NodeBox<D>>>,
 
     pub(crate) count: usize,
     pub(crate) vc: ColVec<D>,
@@ -26,11 +26,11 @@ impl<const D: Udim> Internal<D> {
     }
 
     pub fn add_vc(&mut self, vc: &ColVec<D>) {
-        self.vc.add_vec_to_self(vc);
+        self.vc.add_colvec_to_self(vc);
         self.count += 1;
     }
 
-    pub fn get_child_star_mut(&mut self, dir: &usize) -> *mut Option<NodePtr<D>> {
+    pub fn get_child_star_mut(&mut self, dir: &usize) -> *mut Option<NodeBox<D>> {
         ptr::addr_of_mut!(self.nexts[*dir])
     }
 
@@ -62,19 +62,20 @@ impl<const D: Udim> Internal<D> {
         }
     }
 
-    pub fn new_with_leaf_replacement(leaf: *mut Leaf<D>) -> Box<Self> {
-        let leaf_ref = unsafe { leaf.as_mut().expect("The leaf node to replace") };
-        let bb = leaf_ref.bb.clone();
-        let parent = leaf_ref.get_parent();
-        let next_dir = bb.calc_next_dir(&leaf_ref.vc);
+    pub fn new_with_leaf_replacement(mut leaf_box: Box<Leaf<D>>) -> Box<Self> {
+        let bb = leaf_box.bb.clone();
+        let parent = leaf_box.parent;
+        let next_dir = bb.calc_next_dir(&leaf_box.vc);
         let mut curr = Internal::new_root(bb);
         let next_ptr = curr.get_child_star_mut(&next_dir);
         let next_ref = unsafe { next_ptr.as_mut().expect("The leaf's next position") };
-        *next_ref = Some(NodePtr::Le(leaf));
-        curr.add_vc(&leaf_ref.vc);
+
+        curr.add_vc(&leaf_box.vc);
         curr.parent = parent;
+
         let mut curr_box = Box::new(curr);
-        leaf_ref.set_parent(ptr::addr_of_mut!(*curr_box), &next_dir);
+        leaf_box.set_parent(ptr::addr_of_mut!(*curr_box), next_dir);
+        *next_ref = Some(NodeBox::Le(leaf_box));
 
         curr_box
     }
@@ -88,7 +89,7 @@ impl<const D: Udim> Internal<D> {
             parent: None,
             nexts,
             count: 0,
-            vc: ColVec::new(),
+            vc: ColVec::new_zeros(),
             bb: root_bb,
         }
     }

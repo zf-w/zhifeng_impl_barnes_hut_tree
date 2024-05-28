@@ -8,7 +8,7 @@ pub struct ColVec<const D: Udim> {
 }
 
 impl<const D: Udim> ColVec<D> {
-    pub fn new() -> Self {
+    pub fn new_zeros() -> Self {
         let data: [Fnum; D] = [0.0; D];
         Self { data }
     }
@@ -36,10 +36,6 @@ impl<const D: Udim> ColVec<D> {
     //     length
     // }
 
-    pub fn inside(&self) -> &[Fnum; D] {
-        &self.data
-    }
-
     pub fn add_from_arr(&mut self, other: &[Fnum; D]) {
         for i in 0..D {
             self.data[i] += other[i];
@@ -49,7 +45,7 @@ impl<const D: Udim> ColVec<D> {
         }
     }
 
-    pub fn add_vec_to_self(&mut self, other: &Self) {
+    pub fn add_colvec_to_self(&mut self, other: &Self) {
         for i in 0..D {
             // println!(
             //     "{:?} {:?} {:?}",
