@@ -60,6 +60,21 @@ impl<const D: Udim> ColVec<D> {
         }
     }
 
+    pub fn sub_colvec_from_self(&mut self, other: &Self) {
+        for i in 0..D {
+            // println!(
+            //     "{:?} {:?} {:?}",
+            //     self.data[i],
+            //     other.data[i],
+            //     self.data[i] + other.data[i]
+            // );
+            self.data[i] -= other.data[i];
+            if self.data[i].is_infinite() {
+                panic!("!!!")
+            }
+        }
+    }
+
     pub fn mul_scalar(&mut self, s: Fnum) {
         if s.is_infinite() || s.is_nan() {
             return;

@@ -119,14 +119,12 @@ impl<const D: Udim> BHTree<D> {
         let mut ans = BHTreeSer::<D>::with_num_of_nodes(self.count, &self.vs);
         let mut dq: VecDeque<(*const Internal<D>, Option<(usize, usize)>)> =
             VecDeque::with_capacity(self.count);
-        let vs_start_ptr = self.vs.as_ptr_range().start;
 
         fn add_leaf<const D: Udim>(
             parent_opt: Option<usize>,
             from_dir: Option<usize>,
             leaf_ref: &Leaf<D>,
             ans: &mut BHTreeSer<D>,
-            vs_start_ptr: *const ColVec<D>,
         ) {
             let curr_i = ans.add_node(
                 parent_opt,
@@ -137,10 +135,9 @@ impl<const D: Udim> BHTree<D> {
                 leaf_ref.vs.len(),
             );
 
-            for (i, v_ptr) in leaf_ref.vs.iter().enumerate() {
-                let leaf_i = unsafe { (*v_ptr).offset_from(vs_start_ptr) };
-                ans.to_leafs[leaf_i as usize] = Some(curr_i);
-                ans.idxs[leaf_i as usize] = Some(i);
+            for (i, leaf_i) in leaf_ref.vs.iter().enumerate() {
+                ans.to_leafs[*leaf_i] = Some(curr_i);
+                ans.idxs[*leaf_i] = Some(i);
             }
         }
 
@@ -149,7 +146,7 @@ impl<const D: Udim> BHTree<D> {
                 dq.push_back((ptr::addr_of!(**next_box_ref), None));
             }
             Some(NodeBox::Le(next_leaf_ptr_ref)) => {
-                add_leaf(None, None, next_leaf_ptr_ref, &mut ans, vs_start_ptr);
+                add_leaf(None, None, next_leaf_ptr_ref, &mut ans);
             }
             _ => (),
         }
@@ -176,13 +173,7 @@ impl<const D: Udim> BHTree<D> {
                         dq.push_back((ptr::addr_of!(**next_box_ref), Some((curr_i, from_dir))));
                     }
                     Some(NodeBox::Le(next_leaf_ptr_ref)) => {
-                        add_leaf(
-                            Some(curr_i),
-                            Some(from_dir),
-                            &next_leaf_ptr_ref,
-                            &mut ans,
-                            vs_start_ptr,
-                        );
+                        add_leaf(Some(curr_i), Some(from_dir), &next_leaf_ptr_ref, &mut ans);
                     }
                     _ => (),
                 }

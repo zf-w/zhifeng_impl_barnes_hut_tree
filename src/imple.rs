@@ -1,4 +1,9 @@
-use crate::{boundbox::BoundBox, colvec::ColVec, nodes::Leaf, BHTree, Fnum, Udim};
+use crate::{
+    boundbox::BoundBox,
+    colvec::ColVec,
+    nodes::{Leaf, NodeBox},
+    BHTree, Fnum, Udim,
+};
 
 mod add;
 
@@ -22,7 +27,7 @@ impl<const D: Udim> BHTree<D> {
             br_limit: 0.00000001,
         };
         for i in 0..num {
-            temp_self.add(&i);
+            temp_self.add(i);
         }
         temp_self
     }
@@ -49,9 +54,15 @@ impl<const D: Udim> BHTree<D> {
             br_limit,
         };
         for i in 0..num {
-            temp_self.add(&i);
+            temp_self.add(i);
         }
         temp_self
+    }
+
+    pub(crate) fn set_root_leaf(&mut self, mut leaf_box: Box<Leaf<D>>) {
+        leaf_box.bb.clone_from(&self.bb);
+        self.count = leaf_box.get_num_nodes_inside();
+        self.root = Some(NodeBox::Le(leaf_box));
     }
 
     pub fn update(&mut self, node_i: &usize, val: &[Fnum; D]) {}

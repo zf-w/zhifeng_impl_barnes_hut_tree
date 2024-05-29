@@ -1,7 +1,6 @@
 use std::ptr;
 
 use crate::{
-    colvec::ColVec,
     nodes::{
         Internal, Leaf,
         NodeBox::{self, In, Le},
@@ -16,8 +15,8 @@ impl<const D: Udim> BHTree<D> {
     /// First, we need find the correct direction to continue.
     /// If the final position is a leaf node, we need to insert an internal node in the middle and reinsert the two leaf nodes.
     ///
-    pub(super) fn find_leaf_to_add_value(&mut self, i: &usize) -> *mut Leaf<D> {
-        let leaf_vc = &self.vs[*i];
+    pub(super) fn find_leaf_to_add_value(&mut self, i: usize) -> *mut Leaf<D> {
+        let leaf_vc = &self.vs[i];
 
         let mut curr_ptr = ptr::addr_of_mut!(self.root);
         let mut prev_internal: Option<(*mut Internal<D>, usize)> = None;
@@ -56,7 +55,7 @@ impl<const D: Udim> BHTree<D> {
                 In(internal_box) => internal_box,
             };
 
-            target_internal.add_vc(leaf_vc);
+            target_internal.add_value(leaf_vc);
 
             let next_dir = target_internal.calc_next_dir(leaf_vc);
             let next_ptr = target_internal.get_child_star_mut(&next_dir);
@@ -71,17 +70,12 @@ impl<const D: Udim> BHTree<D> {
         if let Some((parent_internal_ptr, from_dir)) = prev_internal {
             let parent_internal_mut_ref =
                 unsafe { parent_internal_ptr.as_mut().expect("Should work") };
-            let mut ans_leaf = Leaf::new_empty_from_parent_dir(parent_internal_mut_ref, from_dir);
+            let mut ans_leaf_box =
+                Leaf::new_empty_from_parent_dir(parent_internal_mut_ref, from_dir);
 
-            let curr_ptr_mut_ref = unsafe {
-                curr_ptr.as_mut().expect(
-                    "Checking the next pointer, see if that's an avaliable place to put the leaf.",
-                )
-            };
+            let ans_leaf_ptr = ptr::addr_of_mut!(*ans_leaf_box);
 
-            let ans_leaf_ptr = ptr::addr_of_mut!(*ans_leaf);
-
-            *curr_ptr_mut_ref = Some(NodeBox::Le(ans_leaf));
+            parent_internal_mut_ref.attach_leaf_to_dir(from_dir, ans_leaf_box);
 
             self.count += 1;
 

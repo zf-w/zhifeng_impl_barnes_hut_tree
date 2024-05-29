@@ -1,14 +1,13 @@
 use std::ptr;
 
 use crate::{
-    colvec::ColVec,
     nodes::NodeBox::{self, In, Le},
     BHTree, Udim,
 };
 
 impl<const D: Udim> BHTree<D> {
-    pub fn expand_struct_bb(&mut self, i: &usize) {
-        let vc = &self.vs[*i];
+    fn expand_struct_bb(&mut self, i: usize) {
+        let vc = &self.vs[i];
         let mut curr_bb = self.bb.clone();
         while !curr_bb.is_containing(vc) {
             curr_bb = curr_bb.calc_reverse_expand_bb(vc).0;
@@ -18,8 +17,8 @@ impl<const D: Udim> BHTree<D> {
 
     /// # Expand root bounding box according to new leaf value
     #[inline]
-    pub fn expand_root(&mut self, i: &usize) {
-        let vc = &self.vs[*i];
+    pub(super) fn expand_root(&mut self, i: usize) {
+        let vc = &self.vs[i];
 
         if self.bb.is_containing(vc) {
             return;
