@@ -44,6 +44,7 @@ impl<const D: Udim> Leaf<D> {
         if child_i + 1 < len {
             let last_v = self.vs.last().expect("Check length before").clone();
             self.vs[child_i].clone_from(&last_v);
+            self.vs.pop(); // Forgot to pop
             last_v
         } else {
             self.vs.pop();
@@ -51,7 +52,7 @@ impl<const D: Udim> Leaf<D> {
         }
     }
 
-    pub fn get_num_nodes_inside(&self) -> usize {
+    pub fn get_values_num_inside(&self) -> usize {
         self.vs.len()
     }
 

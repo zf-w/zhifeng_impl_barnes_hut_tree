@@ -11,13 +11,6 @@ pub struct BoundBox<const D: Udim> {
 impl<const D: Udim> BoundBox<D> {
     const DIM: usize = D;
 
-    pub fn new_zeros() -> Self {
-        Self {
-            bc: ColVec::new_zeros(),
-            br: 0.0,
-        }
-    }
-
     pub fn new_with_arr(bc: &[Fnum; D], br: Fnum) -> Self {
         Self {
             bc: ColVec::new_with_arr(bc),
@@ -70,6 +63,18 @@ impl<const D: Udim> BoundBox<D> {
             },
             dir,
         )
+    }
+
+    pub fn self_expand(&mut self, vc: &ColVec<D>) {
+        for d in 0..D {
+            let curr_v = &mut self.bc.data[d];
+            if vc.data[d] >= *curr_v {
+                *curr_v += self.br;
+            } else {
+                *curr_v -= self.br;
+            }
+        }
+        self.br *= 2.0;
     }
 
     pub fn is_containing(&self, vc: &ColVec<D>) -> bool {

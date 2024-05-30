@@ -13,6 +13,7 @@ pub struct BHTreeSer<const D: Udim> {
     bcs: Vec<Fnum>,
     brs: Vec<Fnum>,
     ns: Vec<usize>,
+    leaf_ns: Vec<usize>,
     parents: Vec<Option<usize>>,
     from_dirs: Vec<Option<usize>>,
     vs: Vec<Fnum>,
@@ -26,6 +27,7 @@ impl<const D: Udim> BHTreeSer<D> {
         let bcs: Vec<Fnum> = Vec::with_capacity(num * D);
         let brs: Vec<Fnum> = Vec::with_capacity(num);
         let ns: Vec<usize> = Vec::with_capacity(num);
+        let leaf_ns: Vec<usize> = Vec::with_capacity(num);
         let from_dirs: Vec<Option<usize>> = Vec::with_capacity(num);
         let parents: Vec<Option<usize>> = Vec::with_capacity(num);
 
@@ -44,7 +46,9 @@ impl<const D: Udim> BHTreeSer<D> {
             vcs,
             bcs,
             brs,
+
             ns,
+            leaf_ns,
             parents,
             from_dirs,
 
@@ -62,6 +66,7 @@ impl<const D: Udim> BHTreeSer<D> {
         bc: &[Fnum; D],
         br: Fnum,
         n: usize,
+        leaf_n: usize,
     ) -> usize {
         let curr_i = self.ns.len();
 
@@ -79,6 +84,8 @@ impl<const D: Udim> BHTreeSer<D> {
         self.brs.push(br);
 
         self.ns.push(n);
+
+        self.leaf_ns.push(leaf_n);
         curr_i
     }
 
@@ -96,6 +103,9 @@ impl<const D: Udim> BHTreeSer<D> {
     }
     pub fn get_ns(&self) -> &Vec<usize> {
         &self.ns
+    }
+    pub fn get_leaf_nums(&self) -> &Vec<usize> {
+        &self.leaf_ns
     }
     pub fn get_parents(&self) -> &Vec<Option<usize>> {
         &self.parents
@@ -116,9 +126,9 @@ impl<const D: Udim> BHTreeSer<D> {
 
 impl<const D: Udim> BHTree<D> {
     pub fn calc_serde_bhtree(&self) -> BHTreeSer<D> {
-        let mut ans = BHTreeSer::<D>::with_num_of_nodes(self.count, &self.vs);
+        let mut ans = BHTreeSer::<D>::with_num_of_nodes(self.nodes_num, &self.vs);
         let mut dq: VecDeque<(*const Internal<D>, Option<(usize, usize)>)> =
-            VecDeque::with_capacity(self.count);
+            VecDeque::with_capacity(self.nodes_num);
 
         fn add_leaf<const D: Udim>(
             parent_opt: Option<usize>,
@@ -133,6 +143,7 @@ impl<const D: Udim> BHTree<D> {
                 &leaf_ref.bb.bc.data,
                 leaf_ref.bb.br.clone(),
                 leaf_ref.vs.len(),
+                1,
             );
 
             for (i, leaf_i) in leaf_ref.vs.iter().enumerate() {
@@ -166,6 +177,7 @@ impl<const D: Udim> BHTree<D> {
                 &curr_ref.bb.bc.data,
                 curr_ref.bb.br.clone(),
                 curr_ref.count,
+                curr_ref.leaf_count,
             );
             for (from_dir, next) in curr_ref.nexts.iter().enumerate() {
                 match next {

@@ -2,7 +2,7 @@ use std::{fmt::Display, ptr};
 
 use crate::{boundbox::BoundBox, colvec::ColVec, Udim};
 
-use super::{leaf, Leaf, NodeBox};
+use super::{Leaf, NodeBox};
 
 pub struct Internal<const D: Udim> {
     pub(crate) parent: Option<(*mut Self, usize)>,
@@ -80,19 +80,13 @@ impl<const D: Udim> Internal<D> {
         let parent = leaf_box.parent;
         let next_dir = bb.calc_next_dir(&leaf_box.vc);
         let mut curr_box = Box::new(Internal::new_root(bb));
-        // let next_ptr = curr_box.get_child_star_mut(&next_dir);
-        // let next_ref = unsafe { next_ptr.as_mut().expect("The leaf's next position") };
 
         curr_box.add_value(&leaf_box.vc);
         curr_box.parent = parent;
-        curr_box.count = leaf_box.get_num_nodes_inside();
+        curr_box.count = leaf_box.get_values_num_inside();
         curr_box.leaf_count = 1;
 
-        // leaf_box.set_parent(ptr::addr_of_mut!(*curr_box), next_dir);
-
-        // *next_ref = Some(NodeBox::Le(leaf_box));
-
-        curr_box.attach_leaf_to_dir(next_dir, leaf_box);
+        curr_box.link_leaf_to_dir(next_dir, leaf_box);
 
         curr_box
     }
@@ -113,20 +107,27 @@ impl<const D: Udim> Internal<D> {
     }
 
     #[inline]
-    pub fn attach_leaf_to_dir(&mut self, dir: usize, leaf_box: Box<Leaf<D>>) {
-        // self.count += leaf_box.get_num_nodes_inside();
-        self.leaf_count += 1;
-        self.relink_leaf(dir, leaf_box);
-    }
-
-    #[inline]
-    pub fn relink_leaf(&mut self, dir: usize, mut leaf_box: Box<Leaf<D>>) {
+    pub fn link_leaf_to_dir(&mut self, dir: usize, mut leaf_box: Box<Leaf<D>>) {
         leaf_box.set_parent(ptr::addr_of_mut!(*self), dir);
         self.nexts[dir] = Some(NodeBox::Le(leaf_box));
     }
 
     #[inline]
     pub fn drop_child(&mut self, dir: usize) {
+        // if let Some(child_box) = self.nexts[dir].take() {
+        //     match child_box {
+        //         NodeBox::In(internal_box) => {
+        //             self.count -= internal_box.count;
+        //             self.leaf_count -= internal_box.leaf_count;
+        //         }
+        //         NodeBox::Le(leaf_box) => {
+        //             let values_num = leaf_box.get_values_num_inside();
+        //             debug_assert!(values_num == 1);
+        //             self.count -= values_num;
+        //             self.leaf_count -= 1;
+        //         }
+        //     }
+        // }
         self.nexts[dir] = None;
     }
 }
