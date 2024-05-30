@@ -24,10 +24,10 @@ impl<const D: Udim> BHTree<D> {
     ) -> (Box<Internal<D>>, usize) {
         let mut new_created_count: usize = 0;
         while !root_box.bb.is_containing(vc) {
-            let (mut new_root, dir) = root_box.calc_new_internal_with_new_vc(vc);
-            root_box.parent = Some((ptr::addr_of_mut!(*root_box), dir));
-            new_root.nexts[dir] = Some(NodeBox::In(root_box));
-            root_box = new_root;
+            let (mut new_root_box, dir) = root_box.calc_new_internal_with_new_vc(vc);
+            root_box.parent = Some((ptr::addr_of_mut!(*new_root_box), dir)); // One Bug here before, creating a self loop hahaha
+            new_root_box.nexts[dir] = Some(NodeBox::In(root_box));
+            root_box = new_root_box;
             new_created_count += 1;
         }
         (root_box, new_created_count)
