@@ -11,7 +11,7 @@ impl<const D: Udim> BHTree<D> {
                 .as_mut()
                 .expect("Dereferencing the previous found more-than-one-child internal;")
         });
-        let to_sub_v_ref = &self.vs[value_i];
+        let to_sub_v_ref = &self.vs[value_i].0;
         while let Some(curr_internal_mut_ref) = curr_internal_mut_ref_opt {
             curr_internal_mut_ref.sub_value(to_sub_v_ref);
             if let Some((parent_ptr, _)) = curr_internal_mut_ref.parent {

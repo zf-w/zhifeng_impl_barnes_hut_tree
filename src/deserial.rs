@@ -1,4 +1,8 @@
-use std::{collections::VecDeque, fmt::Display, ptr};
+use std::{
+    collections::VecDeque,
+    fmt::{Debug, Display},
+    ptr,
+};
 
 use crate::{
     nodes::{Internal, Leaf, NodeBox},
@@ -22,7 +26,10 @@ pub struct BHTreeSer<const D: Udim> {
 }
 
 impl<const D: Udim> BHTreeSer<D> {
-    pub fn with_num_of_nodes(num: usize, vs: &Vec<ColVec<D>>) -> BHTreeSer<D> {
+    pub fn with_num_of_nodes(
+        num: usize,
+        vs: &Vec<(ColVec<D>, Option<(*mut Leaf<D>, usize)>)>,
+    ) -> BHTreeSer<D> {
         let vcs: Vec<Fnum> = Vec::with_capacity(num * D);
         let bcs: Vec<Fnum> = Vec::with_capacity(num * D);
         let brs: Vec<Fnum> = Vec::with_capacity(num);
@@ -36,7 +43,7 @@ impl<const D: Udim> BHTreeSer<D> {
         let mut ans_vs: Vec<Fnum> = Vec::with_capacity(num * D);
         for v in vs.iter() {
             for d in 0..D {
-                ans_vs.push(v.data[d]);
+                ans_vs.push(v.0.data[d]);
             }
         }
 
@@ -206,4 +213,93 @@ impl<const D: Udim> Display for BHTree<D> {
         ))?;
         Ok(())
     }
+}
+
+pub fn assert_bht_serde_eq<const D: Udim>(
+    calc_bht_ser: &BHTreeSer<D>,
+    expected_bht_ser: &BHTreeSer<D>,
+) {
+    let mut all_match = true;
+
+    fn assert_print<T: PartialEq + Debug>(got: &T, expected: &T, all_match: &mut bool, name: &str) {
+        if got != expected {
+            *all_match = false;
+            println!(
+                "{} do not match.\nExpected: {:?}\n     Got: {:?}",
+                name, expected, got
+            );
+        }
+    }
+
+    assert_print(
+        calc_bht_ser.get_num(),
+        expected_bht_ser.get_num(),
+        &mut all_match,
+        "Tree: Total Node Number",
+    );
+    assert_print(
+        calc_bht_ser.get_bcs(),
+        expected_bht_ser.get_bcs(),
+        &mut all_match,
+        "Node: Bounding Box Centers",
+    );
+    assert_print(
+        calc_bht_ser.get_brs(),
+        expected_bht_ser.get_brs(),
+        &mut all_match,
+        "Node: Bounding Box Ranges",
+    );
+    assert_print(
+        calc_bht_ser.get_vcs(),
+        expected_bht_ser.get_vcs(),
+        &mut all_match,
+        "Node: Value Centers",
+    );
+    assert_print(
+        calc_bht_ser.get_ns(),
+        expected_bht_ser.get_ns(),
+        &mut all_match,
+        "Node: Number of Values Inside",
+    );
+    assert_print(
+        calc_bht_ser.get_leaf_nums(),
+        expected_bht_ser.get_leaf_nums(),
+        &mut all_match,
+        "Node: Number of Leaves Inside",
+    );
+    assert_print(
+        calc_bht_ser.get_parents(),
+        expected_bht_ser.get_parents(),
+        &mut all_match,
+        "Node: Parents",
+    );
+
+    assert_print(
+        calc_bht_ser.get_from_dirs(),
+        expected_bht_ser.get_from_dirs(),
+        &mut all_match,
+        "Node: From which direction",
+    );
+
+    assert_print(
+        calc_bht_ser.get_vs(),
+        expected_bht_ser.get_vs(),
+        &mut all_match,
+        "Value: value of bodies",
+    );
+
+    assert_print(
+        calc_bht_ser.get_to_leafs(),
+        expected_bht_ser.get_to_leafs(),
+        &mut all_match,
+        "Value: each value's corresponding leaf node",
+    );
+
+    assert_print(
+        calc_bht_ser.get_idxs(),
+        expected_bht_ser.get_idxs(),
+        &mut all_match,
+        "Value: each value's corresponding index inside leaf node",
+    );
+    assert!(all_match);
 }

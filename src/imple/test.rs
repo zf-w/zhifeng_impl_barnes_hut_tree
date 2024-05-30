@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::assert_bht_serde;
+use crate::assert_bht_serde_eq;
 #[cfg(test)]
 use crate::{BHTree, BHTreeSer};
 
@@ -7,7 +7,7 @@ use crate::{BHTree, BHTreeSer};
 fn check_sub_from_leaf_tree() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0]];
 
-    let mut bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &4.0, &vals);
+    let mut bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 4.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -28,7 +28,7 @@ fn check_sub_from_leaf_tree() -> Result<(), Box<dyn std::error::Error>> {
     )
     .unwrap();
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     bht.sub(0);
 
@@ -51,7 +51,7 @@ fn check_sub_from_leaf_tree() -> Result<(), Box<dyn std::error::Error>> {
     )
     .unwrap();
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
 }
@@ -60,7 +60,7 @@ fn check_sub_from_leaf_tree() -> Result<(), Box<dyn std::error::Error>> {
 fn check_sub_from_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 3.0], [3.0, 1.0]];
 
-    let mut bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &4.0, &vals);
+    let mut bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 4.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -80,7 +80,7 @@ fn check_sub_from_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     bht.sub(0);
 
@@ -102,7 +102,7 @@ fn check_sub_from_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
 }
@@ -111,7 +111,7 @@ fn check_sub_from_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::
 fn check_sub_from_tree_with_two_internal_insertion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 3.0], [3.0, 1.0]];
 
-    let mut bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &8.0, &vals);
+    let mut bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 8.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -131,7 +131,7 @@ fn check_sub_from_tree_with_two_internal_insertion() -> Result<(), Box<dyn std::
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     bht.sub(0);
 
@@ -153,7 +153,7 @@ fn check_sub_from_tree_with_two_internal_insertion() -> Result<(), Box<dyn std::
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
 }
@@ -162,7 +162,7 @@ fn check_sub_from_tree_with_two_internal_insertion() -> Result<(), Box<dyn std::
 fn check_sub_from_tree_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
 
-    let mut bht: BHTree<2> = BHTree::new_with_arr_and_limit(&[0.0, 0.0], &2.0, &vals, 10.0);
+    let mut bht: BHTree<2> = BHTree::new_with_values_and_limit(&[0.0, 0.0], 2.0, &vals, 10.0);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -182,7 +182,7 @@ fn check_sub_from_tree_with_adding_to_same_leaf() -> Result<(), Box<dyn std::err
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     bht.sub(0);
 
@@ -204,6 +204,6 @@ fn check_sub_from_tree_with_adding_to_same_leaf() -> Result<(), Box<dyn std::err
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }

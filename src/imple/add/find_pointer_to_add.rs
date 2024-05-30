@@ -16,7 +16,7 @@ impl<const D: Udim> BHTree<D> {
     /// If the final position is a leaf node, we need to insert an internal node in the middle and reinsert the two leaf nodes.
     ///
     pub(super) fn find_leaf_to_add_value(&mut self, leaf_i: usize) -> (*mut Leaf<D>, bool) {
-        let leaf_vc = &self.vs[leaf_i];
+        let leaf_vc = &self.vs[leaf_i].0;
 
         let mut curr_mut_ref = &mut self.root;
         let mut prev_internal: Option<(*mut Internal<D>, usize)> = None;

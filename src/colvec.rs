@@ -62,16 +62,15 @@ impl<const D: Udim> ColVec<D> {
 
     pub fn sub_colvec_from_self(&mut self, other: &Self) {
         for i in 0..D {
-            // println!(
-            //     "{:?} {:?} {:?}",
-            //     self.data[i],
-            //     other.data[i],
-            //     self.data[i] + other.data[i]
-            // );
             self.data[i] -= other.data[i];
-            if self.data[i].is_infinite() {
-                panic!("!!!")
-            }
+            debug_assert!(!self.data[i].is_infinite())
+        }
+    }
+
+    pub fn clone_from_arr_ref(&mut self, arr_ref: &[Fnum; D]) {
+        for d in 0..D {
+            debug_assert!(arr_ref[d].is_infinite());
+            self.data[d].clone_from(&arr_ref[d]);
         }
     }
 

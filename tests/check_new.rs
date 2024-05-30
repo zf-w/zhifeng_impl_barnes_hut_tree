@@ -1,10 +1,10 @@
-use zhifeng_bhtree::{assert_bht_serde, BHTree, BHTreeSer};
+use zhifeng_bhtree::{assert_bht_serde_eq, BHTree, BHTreeSer};
 
 #[test]
 fn check_new_to_empty() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &4.0, &vals);
+    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 4.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -25,7 +25,7 @@ fn check_new_to_empty() -> Result<(), Box<dyn std::error::Error>> {
     )
     .unwrap();
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
 
@@ -33,7 +33,7 @@ fn check_new_to_empty() -> Result<(), Box<dyn std::error::Error>> {
 fn check_new_with_one_internal_insertion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 3.0], [3.0, 1.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &4.0, &vals);
+    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 4.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -53,7 +53,7 @@ fn check_new_with_one_internal_insertion() -> Result<(), Box<dyn std::error::Err
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
 
@@ -61,7 +61,7 @@ fn check_new_with_one_internal_insertion() -> Result<(), Box<dyn std::error::Err
 fn check_new_with_two_internal_insertion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 3.0], [3.0, 1.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &8.0, &vals);
+    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 8.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -81,7 +81,7 @@ fn check_new_with_two_internal_insertion() -> Result<(), Box<dyn std::error::Err
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
 }
@@ -90,7 +90,7 @@ fn check_new_with_two_internal_insertion() -> Result<(), Box<dyn std::error::Err
 fn check_new_with_root_expansion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 3.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &2.0, &vals);
+    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 2.0, &vals);
 
     // assert_eq!(bht.to_string(), "{\"dim\":2,\"num\":1,\"vcs\":[1.0,3.0],\"bcs\":[2.0,2.0],\"brs\":[4.0],\"ns\":[1],\"parents\":[null],\"from_dirs\":[null]}");
 
@@ -112,7 +112,7 @@ fn check_new_with_root_expansion() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
 }
@@ -121,7 +121,7 @@ fn check_new_with_root_expansion() -> Result<(), Box<dyn std::error::Error>> {
 fn check_new_with_leaf_expansion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [1.0, 3.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &2.0, &vals);
+    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 2.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -141,7 +141,7 @@ fn check_new_with_leaf_expansion() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
 }
@@ -150,7 +150,7 @@ fn check_new_with_leaf_expansion() -> Result<(), Box<dyn std::error::Error>> {
 fn check_new_with_internal_expansion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [1.0, 3.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &2.0, &vals);
+    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 2.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -170,7 +170,7 @@ fn check_new_with_internal_expansion() -> Result<(), Box<dyn std::error::Error>>
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
 
@@ -178,7 +178,7 @@ fn check_new_with_internal_expansion() -> Result<(), Box<dyn std::error::Error>>
 fn check_new_with_two_internal_expansion() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr(&[0.0, 0.0], &2.0, &vals);
+    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 2.0, &vals);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -198,7 +198,7 @@ fn check_new_with_two_internal_expansion() -> Result<(), Box<dyn std::error::Err
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
 
@@ -206,7 +206,7 @@ fn check_new_with_two_internal_expansion() -> Result<(), Box<dyn std::error::Err
 fn check_new_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr_and_limit(&[0.0, 0.0], &2.0, &vals, 10.0);
+    let bht: BHTree<2> = BHTree::new_with_values_and_limit(&[0.0, 0.0], 2.0, &vals, 10.0);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -226,7 +226,7 @@ fn check_new_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
 
@@ -235,7 +235,7 @@ fn check_new_with_internal_insertion_and_some_adding_to_same_leaf(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
 
-    let bht: BHTree<2> = BHTree::new_with_arr_and_limit(&[0.0, 0.0], &2.0, &vals, 2.0);
+    let bht: BHTree<2> = BHTree::new_with_values_and_limit(&[0.0, 0.0], 2.0, &vals, 2.0);
 
     let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
         "{
@@ -255,6 +255,39 @@ fn check_new_with_internal_insertion_and_some_adding_to_same_leaf(
     )?;
 
     let calc_bht_ser = bht.calc_serde_bhtree();
-    assert_bht_serde(&calc_bht_ser, &expected_bht_ser);
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
+    Ok(())
+}
+
+#[test]
+fn check_pushing_new_with_internal_insertion_and_some_adding_to_same_leaf(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
+
+    let mut bht: BHTree<2> = BHTree::with_capacity_and_limit(&[0.0, 0.0], 2.0, 3, 2.0);
+
+    for value in vals {
+        bht.push(&value);
+    }
+
+    let expected_bht_ser: BHTreeSer<2> = serde_json::from_str(
+        "{
+            \"dim\":2,
+            \"num\":4,
+            \"vcs\":[7.0,7.0,7.0,7.0,0.0,0.0,0.0,0.0],
+            \"bcs\":[6.0,6.0,10.0,10.0,2.0,2.0,0.0,0.0],
+            \"brs\":[8.0,4.0,4.0,2.0],
+            \"ns\":[3,1,2,2],
+            \"leaf_ns\":[2,1,1,1],
+            \"parents\":[null,0,0,2],
+            \"from_dirs\":[null,3,0,0],
+            \"vs\":[1.0,1.0,-1.0,-1.0,7.0,7.0],
+            \"to_leafs\":[3,3,1],
+            \"idxs\":[0,1,0]
+        }",
+    )?;
+
+    let calc_bht_ser = bht.calc_serde_bhtree();
+    assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }

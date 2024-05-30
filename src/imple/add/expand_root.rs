@@ -10,7 +10,7 @@ use crate::{
 
 impl<const D: Udim> BHTree<D> {
     fn expand_struct_bb(&mut self, i: usize) {
-        let vc = &self.vs[i];
+        let vc = &self.vs[i].0;
 
         while !self.bb.is_containing(vc) {
             self.bb.self_expand(vc);
@@ -36,7 +36,7 @@ impl<const D: Udim> BHTree<D> {
     /// # Expand root bounding box according to new leaf value
     #[inline]
     pub(super) fn expand_root(&mut self, i: usize) {
-        let vc = &self.vs[i];
+        let vc = &self.vs[i].0;
 
         if self.bb.is_containing(vc) {
             return;

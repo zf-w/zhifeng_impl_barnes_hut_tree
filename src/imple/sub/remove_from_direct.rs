@@ -21,9 +21,9 @@ impl<const D: Udim> BHTree<D> {
     ///
     #[inline]
     pub(super) fn remove_from_direct_leaf(&mut self, i: usize) -> Option<*mut Internal<D>> {
-        let (parent_leaf, idx) = self.to_leafs[i].expect("We should only remove an added value");
+        let (parent_leaf, idx) = self.vs[i].1.expect("We should only remove an added value");
 
-        self.to_leafs[i] = None;
+        self.vs[i].1 = None;
 
         let parent_leaf_mut_ref = unsafe {
             parent_leaf
@@ -32,9 +32,10 @@ impl<const D: Udim> BHTree<D> {
         };
 
         if parent_leaf_mut_ref.get_values_num_inside() > 1 {
-            let replaced_leaf_i = parent_leaf_mut_ref.sub_value(idx, &self.vs[i]);
+            let replaced_leaf_i = parent_leaf_mut_ref.sub_value(idx, &self.vs[i].0);
             if replaced_leaf_i > 0 {
-                self.to_leafs[replaced_leaf_i]
+                self.vs[replaced_leaf_i]
+                    .1
                     .as_mut()
                     .expect("Using another leaf node to replace the removed")
                     .1 = idx;
@@ -46,7 +47,7 @@ impl<const D: Udim> BHTree<D> {
                         .as_mut()
                         .expect("Cutting the empty parent leaf")
                 };
-                parent1_internal_mut_ref.sub_value(&self.vs[i]);
+                parent1_internal_mut_ref.sub_value(&self.vs[i].0);
 
                 Some(parent1_internal_ptr)
             } else {

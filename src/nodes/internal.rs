@@ -113,6 +113,11 @@ impl<const D: Udim> Internal<D> {
     }
 
     #[inline]
+    pub fn get_values_num_inside(&self) -> usize {
+        self.count
+    }
+
+    #[inline]
     pub fn drop_child(&mut self, dir: usize) {
         // if let Some(child_box) = self.nexts[dir].take() {
         //     match child_box {
