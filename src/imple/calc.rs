@@ -6,6 +6,35 @@ use crate::{
 };
 
 impl<const D: Udim> BHTree<D> {
+    #[inline]
+    pub(crate) fn calc_node<'o>(
+        &'o self,
+        curr_v_ref: &[Fnum; D],
+        node_box_ref: &'o NodeBox<D>,
+        q: &mut VecDeque<&'o NodeBox<D>>,
+        ans_v_mut_ref: &mut [Fnum; D],
+        calc_this: impl Fn(&[Fnum; D], &[Fnum; D], Fnum) -> bool,
+        calc_fn: impl Fn(&[Fnum; D], &[Fnum; D], usize, &mut [Fnum; D]),
+    ) {
+        match node_box_ref {
+            NodeBox::In(internal_ref) => self.calc_neighbour_internal(
+                curr_v_ref,
+                internal_ref.as_ref(),
+                q,
+                ans_v_mut_ref,
+                &calc_this,
+                &calc_fn,
+            ),
+            NodeBox::Le(leaf_ref) => self.calc_neighbour_leaf(
+                curr_v_ref,
+                leaf_ref.as_ref(),
+                ans_v_mut_ref,
+                &calc_this,
+                &calc_fn,
+            ),
+        }
+    }
+
     pub(crate) fn calc_neighbour_internal<'o>(
         &'o self,
         curr_v_ref: &[Fnum; D],

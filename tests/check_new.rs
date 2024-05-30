@@ -39,7 +39,7 @@ fn check_new_with_one_internal_insertion() -> Result<(), Box<dyn std::error::Err
         "{
             \"dim\":2,
             \"num\":4,
-            \"vcs\":[4.0,4.0,4.0,4.0,1.0,3.0,3.0,1.0],
+            \"vcs\":[2.0,2.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"bcs\":[0.0,0.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"brs\":[4.0,2.0,1.0,1.0],
             \"ns\":[2,2,1,1],
@@ -67,7 +67,7 @@ fn check_new_with_two_internal_insertion() -> Result<(), Box<dyn std::error::Err
         "{
             \"dim\":2,
             \"num\":5,
-            \"vcs\":[4.0,4.0,4.0,4.0,4.0,4.0,1.0,3.0,3.0,1.0],
+            \"vcs\":[2.0,2.0,2.0,2.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"bcs\":[0.0,0.0,4.0,4.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"brs\":[8.0,4.0,2.0,1.0,1.0],
             \"ns\":[2,2,2,1,1],
@@ -127,7 +127,7 @@ fn check_new_with_leaf_expansion() -> Result<(), Box<dyn std::error::Error>> {
         "{
             \"dim\":2,
             \"num\":3,
-            \"vcs\":[2.0,4.0,1.0,1.0,1.0,3.0],
+            \"vcs\":[1.0,2.0,1.0,1.0,1.0,3.0],
             \"bcs\":[2.0,2.0,0.0,0.0,0.0,4.0],
             \"brs\":[4.0,2.0,2.0],
             \"ns\":[2,1,1],
@@ -156,7 +156,7 @@ fn check_new_with_internal_expansion() -> Result<(), Box<dyn std::error::Error>>
         "{
             \"dim\":2,
             \"num\":5,
-            \"vcs\":[1.0,3.0,1.0,3.0,0.0,0.0,-1.0,-1.0,1.0,1.0],
+            \"vcs\":[0.3333333333333333,1.0,1.0,3.0,0.0,0.0,-1.0,-1.0,1.0,1.0],
             \"bcs\":[2.0,2.0,0.0,4.0,0.0,0.0,-1.0,-1.0,1.0,1.0],
             \"brs\":[4.0,2.0,2.0,1.0,1.0],
             \"ns\":[3,1,2,1,1],
@@ -176,7 +176,7 @@ fn check_new_with_internal_expansion() -> Result<(), Box<dyn std::error::Error>>
 
 #[test]
 fn check_new_with_two_internal_expansion() -> Result<(), Box<dyn std::error::Error>> {
-    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
+    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [9.0, 9.0]];
 
     let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 2.0, &vals);
 
@@ -184,14 +184,14 @@ fn check_new_with_two_internal_expansion() -> Result<(), Box<dyn std::error::Err
         "{
             \"dim\":2,
             \"num\":6,
-            \"vcs\":[7.0,7.0,7.0,7.0,0.0,0.0,0.0,0.0,-1.0,-1.0,1.0,1.0],
+            \"vcs\":[3.0,3.0,9.0,9.0,0.0,0.0,0.0,0.0,-1.0,-1.0,1.0,1.0],
             \"bcs\":[6.0,6.0,10.0,10.0,2.0,2.0,0.0,0.0,-1.0,-1.0,1.0,1.0],
             \"brs\":[8.0,4.0,4.0,2.0,1.0,1.0],
             \"ns\":[3,1,2,2,1,1],
             \"leaf_ns\":[3,1,2,2,1,1],
             \"parents\":[null,0,0,2,3,3],
             \"from_dirs\":[null,3,0,0,0,3],
-            \"vs\":[1.0,1.0,-1.0,-1.0,7.0,7.0],
+            \"vs\":[1.0,1.0,-1.0,-1.0,9.0,9.0],
             \"to_leafs\":[5,4,1],
             \"idxs\":[0,0,0]
         }",
@@ -204,7 +204,7 @@ fn check_new_with_two_internal_expansion() -> Result<(), Box<dyn std::error::Err
 
 #[test]
 fn check_new_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>> {
-    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
+    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [9.0, 9.0]];
 
     let bht: BHTree<2> = BHTree::new_with_values_and_limit(&[0.0, 0.0], 2.0, &vals, 10.0);
 
@@ -212,14 +212,14 @@ fn check_new_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>
         "{
             \"dim\":2,
             \"num\":1,
-            \"vcs\":[7.0,7.0],
+            \"vcs\":[3.0,3.0],
             \"bcs\":[6.0,6.0],
             \"brs\":[8.0],
             \"ns\":[3],
             \"leaf_ns\":[1],
             \"parents\":[null],
             \"from_dirs\":[null],
-            \"vs\":[1.0,1.0,-1.0,-1.0,7.0,7.0],
+            \"vs\":[1.0,1.0,-1.0,-1.0,9.0,9.0],
             \"to_leafs\":[0,0,0],
             \"idxs\":[0,1,2]
         }",
@@ -233,7 +233,7 @@ fn check_new_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>
 #[test]
 fn check_new_with_internal_insertion_and_some_adding_to_same_leaf(
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
+    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [9.0, 9.0]];
 
     let bht: BHTree<2> = BHTree::new_with_values_and_limit(&[0.0, 0.0], 2.0, &vals, 2.0);
 
@@ -241,14 +241,14 @@ fn check_new_with_internal_insertion_and_some_adding_to_same_leaf(
         "{
             \"dim\":2,
             \"num\":4,
-            \"vcs\":[7.0,7.0,7.0,7.0,0.0,0.0,0.0,0.0],
+            \"vcs\":[3.0,3.0,9.0,9.0,0.0,0.0,0.0,0.0],
             \"bcs\":[6.0,6.0,10.0,10.0,2.0,2.0,0.0,0.0],
             \"brs\":[8.0,4.0,4.0,2.0],
             \"ns\":[3,1,2,2],
             \"leaf_ns\":[2,1,1,1],
             \"parents\":[null,0,0,2],
             \"from_dirs\":[null,3,0,0],
-            \"vs\":[1.0,1.0,-1.0,-1.0,7.0,7.0],
+            \"vs\":[1.0,1.0,-1.0,-1.0,9.0,9.0],
             \"to_leafs\":[3,3,1],
             \"idxs\":[0,1,0]
         }",
@@ -262,7 +262,7 @@ fn check_new_with_internal_insertion_and_some_adding_to_same_leaf(
 #[test]
 fn check_pushing_new_with_internal_insertion_and_some_adding_to_same_leaf(
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
+    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [9.0, 9.0]];
 
     let mut bht: BHTree<2> = BHTree::with_capacity_and_limit(&[0.0, 0.0], 2.0, 3, 2.0);
 
@@ -274,14 +274,14 @@ fn check_pushing_new_with_internal_insertion_and_some_adding_to_same_leaf(
         "{
             \"dim\":2,
             \"num\":4,
-            \"vcs\":[7.0,7.0,7.0,7.0,0.0,0.0,0.0,0.0],
+            \"vcs\":[3.0,3.0,9.0,9.0,0.0,0.0,0.0,0.0],
             \"bcs\":[6.0,6.0,10.0,10.0,2.0,2.0,0.0,0.0],
             \"brs\":[8.0,4.0,4.0,2.0],
             \"ns\":[3,1,2,2],
             \"leaf_ns\":[2,1,1,1],
             \"parents\":[null,0,0,2],
             \"from_dirs\":[null,3,0,0],
-            \"vs\":[1.0,1.0,-1.0,-1.0,7.0,7.0],
+            \"vs\":[1.0,1.0,-1.0,-1.0,9.0,9.0],
             \"to_leafs\":[3,3,1],
             \"idxs\":[0,1,0]
         }",

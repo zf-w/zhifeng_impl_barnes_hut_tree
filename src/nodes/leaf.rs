@@ -32,15 +32,16 @@ impl<const D: Udim> Leaf<D> {
 
     pub fn add_value(&mut self, leaf_i: usize, v: &ColVec<D>) -> usize {
         let i = self.vs.len();
-        self.vc.add_colvec_to_self(v);
+        self.vc.update_online_average_with_one_new_data(i, &v.data);
         self.vs.push(leaf_i);
         i
     }
 
     pub fn sub_value(&mut self, child_i: usize, v: &ColVec<D>) -> usize {
-        self.vc.sub_colvec_from_self(v);
-
         let len = self.vs.len();
+        self.vc
+            .update_online_average_with_one_data_removal(len, &v.data);
+
         if child_i + 1 < len {
             let last_v = self.vs.last().expect("Check length before").clone();
             self.vs[child_i].clone_from(&last_v);

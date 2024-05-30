@@ -1,4 +1,4 @@
-use std::{fmt::Display, ptr};
+use std::ptr;
 
 use crate::{boundbox::BoundBox, colvec::ColVec, Udim};
 
@@ -27,12 +27,14 @@ impl<const D: Udim> Internal<D> {
     }
 
     pub fn add_value(&mut self, vc: &ColVec<D>) {
-        self.vc.add_colvec_to_self(vc);
+        self.vc
+            .update_online_average_with_one_new_data(self.count, &vc.data);
         self.count += 1;
     }
 
     pub fn sub_value(&mut self, vc: &ColVec<D>) {
-        self.vc.sub_colvec_from_self(vc);
+        self.vc
+            .update_online_average_with_one_data_removal(self.count, &vc.data);
         self.count -= 1;
     }
 
@@ -79,10 +81,11 @@ impl<const D: Udim> Internal<D> {
         let bb = leaf_box.bb.clone();
         let parent = leaf_box.parent;
         let next_dir = bb.calc_next_dir(&leaf_box.vc);
-        let mut curr_box = Box::new(Internal::new_root(bb));
 
-        curr_box.add_value(&leaf_box.vc);
+        let mut curr_box = Internal::new_root(bb);
+
         curr_box.parent = parent;
+        curr_box.vc.clone_from(&leaf_box.vc);
         curr_box.count = leaf_box.get_values_num_inside();
         curr_box.leaf_count = 1;
 
@@ -91,19 +94,19 @@ impl<const D: Udim> Internal<D> {
         curr_box
     }
 
-    pub fn new_root(root_bb: BoundBox<D>) -> Self {
+    pub fn new_root(root_bb: BoundBox<D>) -> Box<Self> {
         let mut nexts = Vec::with_capacity(Self::DIM_LEN);
         for _ in 0..Self::DIM_LEN {
             nexts.push(None);
         }
-        Self {
+        Box::new(Self {
             parent: None,
             nexts,
             count: 0,
             leaf_count: 0,
             vc: ColVec::new_zeros(),
             bb: root_bb,
-        }
+        })
     }
 
     #[inline]
@@ -134,16 +137,5 @@ impl<const D: Udim> Internal<D> {
         //     }
         // }
         self.nexts[dir] = None;
-    }
-}
-
-impl<const D: Udim> Display for Internal<D> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "n: {}, vc: {}, bb: {}",
-            self.count, self.vc, self.bb
-        ))?;
-
-        Ok(())
     }
 }

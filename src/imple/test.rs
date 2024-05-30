@@ -66,7 +66,7 @@ fn check_sub_from_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::
         "{
             \"dim\":2,
             \"num\":4,
-            \"vcs\":[4.0,4.0,4.0,4.0,1.0,3.0,3.0,1.0],
+            \"vcs\":[2.0,2.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"bcs\":[0.0,0.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"brs\":[4.0,2.0,1.0,1.0],
             \"ns\":[2,2,1,1],
@@ -117,7 +117,7 @@ fn check_sub_from_tree_with_two_internal_insertion() -> Result<(), Box<dyn std::
         "{
             \"dim\":2,
             \"num\":5,
-            \"vcs\":[4.0,4.0,4.0,4.0,4.0,4.0,1.0,3.0,3.0,1.0],
+            \"vcs\":[2.0,2.0,2.0,2.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"bcs\":[0.0,0.0,4.0,4.0,2.0,2.0,1.0,3.0,3.0,1.0],
             \"brs\":[8.0,4.0,2.0,1.0,1.0],
             \"ns\":[2,2,2,1,1],
@@ -160,7 +160,7 @@ fn check_sub_from_tree_with_two_internal_insertion() -> Result<(), Box<dyn std::
 
 #[test]
 fn check_sub_from_tree_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>> {
-    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [7.0, 7.0]];
+    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [9.0, 9.0]];
 
     let mut bht: BHTree<2> = BHTree::new_with_values_and_limit(&[0.0, 0.0], 2.0, &vals, 10.0);
 
@@ -168,14 +168,14 @@ fn check_sub_from_tree_with_adding_to_same_leaf() -> Result<(), Box<dyn std::err
         "{
             \"dim\":2,
             \"num\":1,
-            \"vcs\":[7.0,7.0],
+            \"vcs\":[3.0,3.0],
             \"bcs\":[6.0,6.0],
             \"brs\":[8.0],
             \"ns\":[3],
             \"leaf_ns\":[1],
             \"parents\":[null],
             \"from_dirs\":[null],
-            \"vs\":[1.0,1.0,-1.0,-1.0,7.0,7.0],
+            \"vs\":[1.0,1.0,-1.0,-1.0,9.0,9.0],
             \"to_leafs\":[0,0,0],
             \"idxs\":[0,1,2]
         }",
@@ -190,14 +190,14 @@ fn check_sub_from_tree_with_adding_to_same_leaf() -> Result<(), Box<dyn std::err
         "{
             \"dim\":2,
             \"num\":1,
-            \"vcs\":[6.0,6.0],
+            \"vcs\":[4.0,4.0],
             \"bcs\":[6.0,6.0],
             \"brs\":[8.0],
             \"ns\":[2],
             \"leaf_ns\":[1],
             \"parents\":[null],
             \"from_dirs\":[null],
-            \"vs\":[1.0,1.0,-1.0,-1.0,7.0,7.0],
+            \"vs\":[1.0,1.0,-1.0,-1.0,9.0,9.0],
             \"to_leafs\":[null,0,0],
             \"idxs\":[null,1,0]
         }",
