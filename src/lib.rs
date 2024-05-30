@@ -1,5 +1,5 @@
-pub type Fnum = f64;
-pub type Udim = usize;
+type Fnum = f64;
+type Udim = usize;
 
 mod colvec;
 

@@ -11,6 +11,7 @@ serde_json = { version = "1.0.117" }#, optional = true }
 
 [dev-dependencies]
 rand = "0.8.5"
+criterion = "0.3"
 
 [features]
 #deserial = ["dep:serde", "dep:serde_json"]
@@ -18,3 +19,7 @@ rand = "0.8.5"
 [[test]]
 name = "check_new"
 #required-features = ["deserial"]
+
+[[bench]]
+name = "cmp_n_body_force_sim"
+harness = false

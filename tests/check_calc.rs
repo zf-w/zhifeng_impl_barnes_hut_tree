@@ -1,7 +1,10 @@
 use std::ops::Range;
 
 use rand::Rng;
-use zhifeng_bhtree::{BHTree, Fnum, Udim};
+use zhifeng_bhtree::BHTree;
+
+type Fnum = f64;
+type Udim = usize;
 
 #[test]
 fn check_calc_on_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::error::Error>> {
