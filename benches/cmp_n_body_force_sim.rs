@@ -1,8 +1,9 @@
 use std::{ops::Range, time::Duration};
+use zhifeng_impl_barnes_hut_tree as zbht;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use rand::Rng;
-use zhifeng_bhtree::BHTree;
+use zbht::BarnesHutTree as BHTree;
 
 type Fnum = f64;
 type Udim = usize;
@@ -28,7 +29,7 @@ fn check_vanillia_force_simulation_on_random_values(
     const D: usize = 2;
     let mut values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
 
-    let calc_fn = zhifeng_bhtree::factory_of_repulsive_displacement_calc_fn::<D>(1.0, 0.2);
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<D>(1.0, 0.2);
     for value_i in 0..len {
         let mut displacement = [0.0; D];
 
@@ -56,8 +57,8 @@ fn check_tree_force_simulation_on_random_values(
     let values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
     let mut bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 5.0, &values);
 
-    let is_super_fn = zhifeng_bhtree::factory_of_is_super_node_fn::<D>(1.2);
-    let calc_fn = zhifeng_bhtree::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+    let is_super_fn = zbht::utils::factory_of_is_super_node_fn::<D>(1.2);
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
     for value_i in 0..len {
         let mut displacement = [0.0; D];
 
@@ -74,20 +75,24 @@ fn check_tree_force_simulation_on_random_values(
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let mut g = c.benchmark_group("Compare One-Round N-Body Simulation");
+    let mut len = 1000;
+    let mut g = c.benchmark_group("Compare One-Calc-Update-Round 1000-Body Simulation");
     g.measurement_time(Duration::from_secs(20));
-    g.bench_function("Barnes-Hut Tree: 1000 Nodes", |b| {
-        b.iter(|| check_tree_force_simulation_on_random_values(1000))
+    g.bench_function("Barnes-Hut-Tree", |b| {
+        b.iter(|| check_tree_force_simulation_on_random_values(len))
     });
-    g.bench_function("Vanillia: 1000 Nodes", |b| {
-        b.iter(|| check_vanillia_force_simulation_on_random_values(1000))
+    g.bench_function("Vanillia", |b| {
+        b.iter(|| check_vanillia_force_simulation_on_random_values(len))
     });
-
-    g.bench_function("Barnes-Hut Tree: 10000 Nodes", |b| {
-        b.iter(|| check_tree_force_simulation_on_random_values(10000))
+    drop(g);
+    let mut g = c.benchmark_group("Compare One-Calc-Update-Round 10000-Body Simulation");
+    g.measurement_time(Duration::from_secs(20));
+    len = 10000;
+    g.bench_function("Barnes-Hut-Tree", |b| {
+        b.iter(|| check_tree_force_simulation_on_random_values(len))
     });
-    g.bench_function("Vanillia: 10000 Nodes", |b| {
-        b.iter(|| check_vanillia_force_simulation_on_random_values(10000))
+    g.bench_function("Vanillia", |b| {
+        b.iter(|| check_vanillia_force_simulation_on_random_values(len))
     });
 }
 

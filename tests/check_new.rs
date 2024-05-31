@@ -1,4 +1,6 @@
-use zhifeng_bhtree::{assert_bht_serde_eq, BHTree, BHTreeSer};
+use zhifeng_impl_barnes_hut_tree as zbht;
+
+use zbht::{assert_bht_serde_eq, BarnesHutTree as BHTree, BarnesHutTreeSer as BHTreeSer};
 
 #[test]
 fn check_new_to_empty() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,7 +26,7 @@ fn check_new_to_empty() -> Result<(), Box<dyn std::error::Error>> {
         }",
     )
     .unwrap();
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
@@ -52,7 +54,7 @@ fn check_new_with_one_internal_insertion() -> Result<(), Box<dyn std::error::Err
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
@@ -80,7 +82,7 @@ fn check_new_with_two_internal_insertion() -> Result<(), Box<dyn std::error::Err
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
@@ -111,7 +113,7 @@ fn check_new_with_root_expansion() -> Result<(), Box<dyn std::error::Error>> {
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
@@ -140,7 +142,7 @@ fn check_new_with_leaf_expansion() -> Result<(), Box<dyn std::error::Error>> {
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
 
     Ok(())
@@ -169,7 +171,7 @@ fn check_new_with_internal_expansion() -> Result<(), Box<dyn std::error::Error>>
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
@@ -197,7 +199,7 @@ fn check_new_with_two_internal_expansion() -> Result<(), Box<dyn std::error::Err
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
@@ -225,7 +227,7 @@ fn check_new_with_adding_to_same_leaf() -> Result<(), Box<dyn std::error::Error>
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
@@ -254,7 +256,7 @@ fn check_new_with_internal_insertion_and_some_adding_to_same_leaf(
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
@@ -287,7 +289,7 @@ fn check_pushing_new_with_internal_insertion_and_some_adding_to_same_leaf(
         }",
     )?;
 
-    let calc_bht_ser = bht.calc_serde_bhtree();
+    let calc_bht_ser = bht.calc_serialized();
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }

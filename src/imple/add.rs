@@ -1,9 +1,9 @@
-use crate::{nodes::Leaf, BHTree, Udim};
+use crate::{nodes::Leaf, BarnesHutTree, Udim};
 
 mod expand_root;
 mod find_pointer_to_add;
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     fn back_to_root_and_update_values(
         &mut self,
         value_i: usize,

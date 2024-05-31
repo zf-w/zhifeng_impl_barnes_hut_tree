@@ -1,6 +1,6 @@
-use crate::{nodes::Internal, BHTree, Udim};
+use crate::{nodes::Internal, BarnesHutTree, Udim};
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     /// # Removing the leaf value from the direct leaf node
     ///
     /// An added leaf value always have a direct leaf node parent containing that value.

@@ -5,10 +5,10 @@ use crate::{
         Internal,
         NodeBox::{self, In, Le},
     },
-    BHTree, ColVec, Udim,
+    BarnesHutTree, ColVec, Udim,
 };
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     fn expand_struct_bb(&mut self, i: usize) {
         let vc = &self.vs[i].0;
 

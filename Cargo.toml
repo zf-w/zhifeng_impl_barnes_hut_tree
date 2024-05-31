@@ -1,24 +1,28 @@
 [package]
-name = "zhifeng_bhtree"
+name = "zhifeng_impl_barnes_hut_tree"
 version = "0.0.20240527"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { version = "1.0.202", features = ["derive"] }#, optional = true }
-serde_json = { version = "1.0.117" }#, optional = true }
+serde = { version = "1.0.202", features = ["derive"], optional = true }
+serde_json = { version = "1.0.117" , optional = true }
 
 [dev-dependencies]
 rand = "0.8.5"
 criterion = "0.3"
 
 [features]
-#deserial = ["dep:serde", "dep:serde_json"]
+serialize = ["dep:serde", "dep:serde_json"]
 
 [[test]]
 name = "check_new"
-#required-features = ["deserial"]
+required-features = ["serialize"]
+
+[[test]]
+name = "check_calc"
+required-features = ["serialize"]
 
 [[bench]]
 name = "cmp_n_body_force_sim"

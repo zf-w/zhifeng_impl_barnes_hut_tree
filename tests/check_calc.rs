@@ -1,7 +1,8 @@
 use std::ops::Range;
+use zhifeng_impl_barnes_hut_tree as zbht;
 
 use rand::Rng;
-use zhifeng_bhtree::BHTree;
+use zbht::BarnesHutTree as BHTree;
 
 type Fnum = f64;
 type Udim = usize;
@@ -13,7 +14,7 @@ fn check_calc_on_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::e
 
     let bht: BHTree<D> = BHTree::new_with_values(&[0.0, 0.0], 4.0, &vals);
 
-    let calc_fn = zhifeng_bhtree::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
 
     let mut displacement = [0.0; D];
     bht.calc_force_on_value(0, |_, _, _| -> bool { false }, &calc_fn, &mut displacement);
@@ -58,7 +59,7 @@ fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Err
 
     println!("Number of Nodes: {}", bht.nodes_num());
 
-    let calc_fn = zhifeng_bhtree::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
     for value_i in 0..len {
         let mut displacement = [0.0; D];
         let mut expected_displacement = [0.0; D];
@@ -95,7 +96,7 @@ fn check_exact_force_simulation_on_100_random_values() -> Result<(), Box<dyn std
 
     println!("Number of Nodes: {}", bht.nodes_num());
 
-    let calc_fn = zhifeng_bhtree::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
     for value_i in 0..len {
         let mut displacement = [0.0; D];
         let mut expected_displacement = [0.0; D];
@@ -140,7 +141,7 @@ fn check_exact_force_simulation_on_1000_random_values() -> Result<(), Box<dyn st
 
     println!("Number of Nodes: {}", bht.nodes_num());
 
-    let calc_fn = zhifeng_bhtree::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
     for value_i in 0..len {
         let mut displacement = [0.0; D];
         let mut expected_displacement = [0.0; D];

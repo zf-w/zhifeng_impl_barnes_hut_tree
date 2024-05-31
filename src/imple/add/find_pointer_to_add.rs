@@ -5,10 +5,10 @@ use crate::{
         Internal, Leaf,
         NodeBox::{self, In, Le},
     },
-    BHTree, Udim,
+    BarnesHutTree, Udim,
 };
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     /// # Find the pointer to add the leaf node
     ///
     /// We need to find the correct position to add a leaf position.

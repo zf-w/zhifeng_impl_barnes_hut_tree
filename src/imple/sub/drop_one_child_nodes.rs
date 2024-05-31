@@ -2,12 +2,12 @@ use std::ptr;
 
 use crate::{
     nodes::{Internal, Leaf},
-    BHTree,
+    BarnesHutTree,
     NodeBox::{In, Le},
     Udim,
 };
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     /// # Drop One-Child Internals
     ///
     /// After we have cut the to-remove value from the leaf and the leaf from its parent internal node, the parent internal node might only holds one child, and we need to cut these nodes out until an internal node with more than one leaves.

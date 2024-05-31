@@ -2,7 +2,7 @@ use crate::{
     boundbox::BoundBox,
     colvec::ColVec,
     nodes::{Leaf, NodeBox},
-    BHTree, Fnum, Udim,
+    BarnesHutTree, Fnum, Udim,
 };
 
 mod add;
@@ -11,7 +11,7 @@ mod sub;
 
 mod calc;
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     #[inline]
     pub(crate) fn new_without_add(
         root_bc: &[Fnum; D],
@@ -42,5 +42,5 @@ impl<const D: Udim> BHTree<D> {
     }
 }
 
-// #[cfg(all(test, feature = "deserial"))]
+#[cfg(all(test, feature = "serial"))]
 mod test;

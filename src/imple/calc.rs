@@ -2,10 +2,10 @@ use std::collections::VecDeque;
 
 use crate::{
     nodes::{Internal, Leaf, NodeBox},
-    BHTree, Fnum, Udim,
+    BarnesHutTree, Fnum, Udim,
 };
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     #[inline]
     pub(crate) fn calc_node<'o>(
         &'o self,

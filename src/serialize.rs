@@ -1,16 +1,12 @@
-use std::{
-    collections::VecDeque,
-    fmt::{Debug, Display},
-    ptr,
-};
+use std::{collections::VecDeque, fmt::Debug, ptr};
 
 use crate::{
     nodes::{Internal, Leaf, NodeBox},
-    BHTree, ColVec, Fnum, Udim,
+    BarnesHutTree, ColVec, Fnum, Udim,
 };
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct BHTreeSer<const D: Udim> {
+pub struct BarnesHutTreeSer<const D: Udim> {
     dim: usize,
     num: usize,
     vcs: Vec<Fnum>,
@@ -25,11 +21,11 @@ pub struct BHTreeSer<const D: Udim> {
     idxs: Vec<Option<usize>>,
 }
 
-impl<const D: Udim> BHTreeSer<D> {
+impl<const D: Udim> BarnesHutTreeSer<D> {
     pub fn with_num_of_nodes(
         num: usize,
         vs: &Vec<(ColVec<D>, Option<(*mut Leaf<D>, usize)>)>,
-    ) -> BHTreeSer<D> {
+    ) -> BarnesHutTreeSer<D> {
         let vcs: Vec<Fnum> = Vec::with_capacity(num * D);
         let bcs: Vec<Fnum> = Vec::with_capacity(num * D);
         let brs: Vec<Fnum> = Vec::with_capacity(num);
@@ -47,7 +43,7 @@ impl<const D: Udim> BHTreeSer<D> {
             }
         }
 
-        BHTreeSer {
+        BarnesHutTreeSer {
             num,
             dim: D,
             vcs,
@@ -131,9 +127,9 @@ impl<const D: Udim> BHTreeSer<D> {
     }
 }
 
-impl<const D: Udim> BHTree<D> {
-    pub fn calc_serde_bhtree(&self) -> BHTreeSer<D> {
-        let mut ans = BHTreeSer::<D>::with_num_of_nodes(self.nodes_num, &self.vs);
+impl<const D: Udim> BarnesHutTree<D> {
+    pub fn calc_serialized(&self) -> BarnesHutTreeSer<D> {
+        let mut ans = BarnesHutTreeSer::<D>::with_num_of_nodes(self.nodes_num, &self.vs);
         let mut dq: VecDeque<(*const Internal<D>, Option<(usize, usize)>)> =
             VecDeque::with_capacity(self.nodes_num);
 
@@ -141,7 +137,7 @@ impl<const D: Udim> BHTree<D> {
             parent_opt: Option<usize>,
             from_dir: Option<usize>,
             leaf_ref: &Leaf<D>,
-            ans: &mut BHTreeSer<D>,
+            ans: &mut BarnesHutTreeSer<D>,
         ) {
             let curr_i = ans.add_node(
                 parent_opt,
@@ -202,11 +198,21 @@ impl<const D: Udim> BHTree<D> {
     }
 }
 
-impl<const D: Udim> Display for BHTree<D> {
+impl<const D: Udim> serde::Serialize for BarnesHutTree<D> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let bht_ser = self.calc_serialized();
+        bht_ser.serialize(serializer)
+    }
+}
+
+impl<const D: Udim> Debug for BarnesHutTree<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "{}",
-            match serde_json::to_string(&self.calc_serde_bhtree()) {
+            match serde_json::to_string(&self.calc_serialized()) {
                 Ok(s) => s,
                 Err(_) => return std::fmt::Result::Err(std::fmt::Error),
             }
@@ -216,8 +222,8 @@ impl<const D: Udim> Display for BHTree<D> {
 }
 
 pub fn assert_bht_serde_eq<const D: Udim>(
-    calc_bht_ser: &BHTreeSer<D>,
-    expected_bht_ser: &BHTreeSer<D>,
+    calc_bht_ser: &BarnesHutTreeSer<D>,
+    expected_bht_ser: &BarnesHutTreeSer<D>,
 ) {
     let mut all_match = true;
 

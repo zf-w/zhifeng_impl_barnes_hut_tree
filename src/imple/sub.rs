@@ -1,10 +1,10 @@
-use crate::{nodes::Internal, BHTree, Udim};
+use crate::{nodes::Internal, BarnesHutTree, Udim};
 
 mod remove_from_direct;
 
 mod drop_one_child_nodes;
 
-impl<const D: Udim> BHTree<D> {
+impl<const D: Udim> BarnesHutTree<D> {
     fn sub_value_util_root(&mut self, internal_ptr: *mut Internal<D>, value_i: usize) {
         let mut curr_internal_mut_ref_opt = Some(unsafe {
             internal_ptr
