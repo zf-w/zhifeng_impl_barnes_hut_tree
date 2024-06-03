@@ -15,7 +15,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     /// First, we need find the correct direction to continue.
     /// If the final position is a leaf node, we need to insert an internal node in the middle and reinsert the two leaf nodes.
     ///
-    pub(super) fn find_leaf_to_add_value(&mut self, leaf_i: usize) -> (*mut Leaf<D>, bool) {
+    pub(super) fn find_leaf_to_add_value(&mut self, leaf_i: usize) -> *mut Leaf<D> {
         let leaf_vc = &self.vs[leaf_i].0;
 
         let mut curr_mut_ref = &mut self.root;
@@ -29,7 +29,7 @@ impl<const D: Udim> BarnesHutTree<D> {
 
                         *curr_mut_ref = Some(NodeBox::Le(curr_leaf_box));
 
-                        return (curr_leaf_ptr, false);
+                        return curr_leaf_ptr;
                     } else {
                         self.nodes_num += 1;
 
@@ -39,7 +39,7 @@ impl<const D: Udim> BarnesHutTree<D> {
                 In(internal_box) => internal_box,
             };
 
-            // target_internal.add_value(leaf_vc);
+            target_internal.add_value(leaf_vc);
 
             let next_dir = target_internal.calc_next_dir(leaf_vc);
             let next_ptr = target_internal.get_child_star_mut(&next_dir);
@@ -67,7 +67,7 @@ impl<const D: Udim> BarnesHutTree<D> {
 
             self.nodes_num += 1;
 
-            (ans_leaf_ptr, true)
+            ans_leaf_ptr
         } else {
             let mut ans_leaf = Leaf::new_empty_from_bb(self.bb.clone());
             let ans_leaf_ptr = ptr::addr_of_mut!(*ans_leaf);
@@ -75,7 +75,7 @@ impl<const D: Udim> BarnesHutTree<D> {
             self.root = Some(NodeBox::Le(ans_leaf));
             self.nodes_num += 1;
 
-            (ans_leaf_ptr, true)
+            ans_leaf_ptr
         }
     }
 }

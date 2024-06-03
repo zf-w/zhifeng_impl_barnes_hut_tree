@@ -53,12 +53,6 @@ pub fn assert_bht_serde_eq<const D: Udim>(
         "Node: Number of Values Inside",
     );
     assert_print(
-        calc_bht_ser.get_leaf_nums(),
-        expected_bht_ser.get_leaf_nums(),
-        &mut all_match,
-        "Node: Number of Leaves Inside",
-    );
-    assert_print(
         calc_bht_ser.get_parents(),
         expected_bht_ser.get_parents(),
         &mut all_match,

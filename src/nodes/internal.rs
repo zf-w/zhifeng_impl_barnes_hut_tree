@@ -7,7 +7,6 @@ use super::{Leaf, NodeBox};
 pub struct Internal<const D: Udim> {
     pub(crate) parent: Option<(*mut Self, usize)>,
     pub(crate) nexts: Vec<Option<NodeBox<D>>>,
-    pub(crate) leaf_count: usize,
 
     pub(crate) count: usize,
     pub(crate) vc: ColVec<D>,
@@ -50,18 +49,12 @@ impl<const D: Udim> Internal<D> {
                 new_bb,
                 self.vc.clone(),
                 self.count,
-                self.leaf_count,
             )),
             dir,
         )
     }
 
-    pub fn new_empty_with_vc_and_bb(
-        bb: BoundBox<D>,
-        vc: ColVec<D>,
-        count: usize,
-        leaf_count: usize,
-    ) -> Self {
+    pub fn new_empty_with_vc_and_bb(bb: BoundBox<D>, vc: ColVec<D>, count: usize) -> Self {
         let parent: Option<(*mut Internal<D>, usize)> = None;
         let mut nexts = Vec::with_capacity(Self::DIM_LEN);
         for _ in 0..Self::DIM_LEN {
@@ -72,7 +65,6 @@ impl<const D: Udim> Internal<D> {
             parent,
             nexts,
             count,
-            leaf_count,
             vc,
         }
     }
@@ -87,7 +79,6 @@ impl<const D: Udim> Internal<D> {
         curr_box.parent = parent;
         curr_box.vc.clone_from(&leaf_box.vc);
         curr_box.count = leaf_box.get_values_num_inside();
-        curr_box.leaf_count = 1;
 
         curr_box.link_leaf_to_dir(next_dir, leaf_box);
 
@@ -103,7 +94,6 @@ impl<const D: Udim> Internal<D> {
             parent: None,
             nexts,
             count: 0,
-            leaf_count: 0,
             vc: ColVec::new_zeros(),
             bb: root_bb,
         })
