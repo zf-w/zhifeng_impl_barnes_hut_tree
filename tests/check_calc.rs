@@ -74,8 +74,6 @@ fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Err
     let values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
     let bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
 
-    println!("Number of Nodes: {}", bht.nodes_num());
-
     let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
 
     for value_i in 0..len {
@@ -88,9 +86,6 @@ fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Err
             &mut displacement,
         );
 
-        // displacement = probe.export();
-        // probe.reset();
-
         for value_j in 0..len {
             if value_j == value_i {
                 continue;
@@ -102,9 +97,6 @@ fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Err
                 &mut expected_displacement,
             );
         }
-        // drop(calc_fn);
-        // expected_displacement = probe.export();
-        // probe.reset();
 
         assert_values_close(&displacement, &expected_displacement, 1e-9);
     }
@@ -118,8 +110,6 @@ fn check_exact_force_simulation_on_100_random_values_with_energy(
     let len = 100;
     let mut values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
     let mut bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
-
-    println!("Number of Nodes: {}", bht.nodes_num());
 
     let calc_fn = zbht::utils::factory_of_repulsive_displacement_with_energy_calc_fn::<2>(1.0, 0.2);
     for value_i in 0..len {
@@ -163,8 +153,6 @@ fn check_exact_force_simulation_on_1000_random_values() -> Result<(), Box<dyn st
     let len = 1000;
     let mut values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
     let mut bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
-
-    println!("Number of Nodes: {}", bht.nodes_num());
 
     let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
     for value_i in 0..len {

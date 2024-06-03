@@ -289,7 +289,7 @@ fn check_pushing_new_with_internal_insertion_and_some_adding_to_same_leaf(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [9.0, 9.0]];
 
-    let mut bht: BHTree<2> = BHTree::with_bounding_capacity_and_limit(&[0.0, 0.0], 2.0, 3, 2.0);
+    let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity_and_limit(&[0.0, 0.0], 2.0, 3, 2.0);
 
     for value in vals {
         bht.push(&value);

@@ -32,30 +32,18 @@ impl<const D: Udim> BarnesHutTree<D> {
             internal_vec,
             root: None,
             bb: BoundBox::new_with_arr(root_bc, root_br),
-            nodes_num: 0,
             br_limit,
         }
     }
 
     #[inline]
-    pub fn dereference_leaf(&mut self, leaf_i: usize) -> &mut Leaf<D> {
-        self.leaf_vec.get_mut(leaf_i).unwrap().as_mut()
-    }
-
-    #[inline]
-    pub fn dereference_internal(&mut self, internal_i: usize) -> &mut Internal<D> {
-        self.internal_vec.get_mut(internal_i).unwrap().as_mut()
-    }
-    #[inline]
     pub(crate) fn new_leaf(&mut self, leaf_box: Box<Leaf<D>>) -> usize {
-        self.nodes_num += 1;
         let ans_i = self.leaf_vec.len();
         self.leaf_vec.push(leaf_box);
         ans_i
     }
     #[inline]
     pub(crate) fn drop_leaf(&mut self, leaf_i: usize) {
-        self.nodes_num -= 1;
         let curr_len = self.leaf_vec.len();
         if leaf_i >= curr_len {
             return;
@@ -81,7 +69,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     }
 
     #[inline]
-    pub fn drop_child(&mut self, internal_i: usize, dir: usize) {
+    pub(crate) fn drop_child(&mut self, internal_i: usize, dir: usize) {
         let internal_mut_ref = self.internal_vec.get_mut(internal_i).unwrap().as_mut();
         let to_drop = internal_mut_ref.drop_child(dir);
         if let Some(node_i) = to_drop {
@@ -98,7 +86,6 @@ impl<const D: Udim> BarnesHutTree<D> {
 
     #[inline]
     pub(crate) fn new_internal(&mut self, internal_box: Box<Internal<D>>) -> usize {
-        self.nodes_num += 1;
         let ans_i = self.internal_vec.len();
         self.internal_vec.push(internal_box);
         ans_i
@@ -106,7 +93,6 @@ impl<const D: Udim> BarnesHutTree<D> {
 
     #[inline]
     pub(crate) fn drop_internal(&mut self, internal_i: usize) -> Option<(usize, usize)> {
-        self.nodes_num -= 1;
         let curr_len = self.internal_vec.len();
         if internal_i >= curr_len {
             return None;
@@ -163,7 +149,6 @@ impl<const D: Udim> BarnesHutTree<D> {
             .as_mut();
 
         leaf_mut_ref.bb.clone_from(&self.bb);
-        self.nodes_num = 1;
         self.root = Some(NodeIndex::Le(leaf_i));
     }
 }

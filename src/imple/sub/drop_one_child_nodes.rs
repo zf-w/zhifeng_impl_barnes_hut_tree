@@ -86,13 +86,14 @@ impl<const D: Udim> BarnesHutTree<D> {
             }
         }
 
-        let internal_mut_ref = unsafe { self.internal_vec.get_unchecked_mut(internal_i).as_mut() };
-
         if let Some(prev_dir) = prev_dir_opt {
+            let internal_mut_ref =
+                unsafe { self.internal_vec.get_unchecked_mut(internal_i).as_mut() };
             let sibling_mut_ref = self.leaf_vec.get_mut(sibling_i).unwrap().as_mut();
             internal_mut_ref.link_leaf_to_dir(prev_dir, internal_i, sibling_i, sibling_mut_ref);
             Some(internal_i)
         } else {
+            self.drop_internal(internal_i);
             self.set_root_leaf(sibling_i);
             None
         }

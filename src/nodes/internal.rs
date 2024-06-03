@@ -1,5 +1,3 @@
-use std::ptr;
-
 use crate::{boundbox::BoundBox, colvec::ColVec, Udim};
 
 use super::{Leaf, NodeIndex};
@@ -14,7 +12,6 @@ pub struct Internal<const D: Udim> {
 }
 
 impl<const D: Udim> Internal<D> {
-    // const DIM: usize = D;
     const DIM_LEN: usize = 2_usize.pow(D as u32);
 
     pub fn calc_next_dir(&self, vc: &ColVec<D>) -> usize {
@@ -35,10 +32,6 @@ impl<const D: Udim> Internal<D> {
         self.vc
             .update_online_average_with_one_data_removal(self.count, &vc.data);
         self.count -= 1;
-    }
-
-    pub fn get_child_star_mut(&mut self, dir: &usize) -> *mut Option<NodeIndex> {
-        ptr::addr_of_mut!(self.nexts[*dir])
     }
 
     pub fn calc_new_internal_with_new_vc(&self, vc: &ColVec<D>) -> (Box<Self>, usize) {

@@ -31,7 +31,6 @@ pub struct BarnesHutTree<const D: Udim> {
 
     root: Option<NodeIndex>,
 
-    nodes_num: usize,
     bb: BoundBox<D>,
 
     br_limit: Fnum,
@@ -39,7 +38,28 @@ pub struct BarnesHutTree<const D: Udim> {
 
 mod imple;
 
+/// # Constructors
 impl<const D: Udim> BarnesHutTree<D> {
+    ///
+    /// Construct a new, empty Barnes Hut Tree.
+    ///
+    /// ## Example:
+    ///
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let bht: BHTree<2> = BHTree::new();
+    /// bht.push(&[-1.0,1.0]);
+    /// bht.push(&[1.0,1.0]);
+    ///
+    /// let mut ans_displacement = [0.0; 2];
+    ///
+    /// bht.calc_force_on_value(0, |_,_,_| -> bool {false}, zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2), &mut ans_displacement);
+    ///
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
+    /// ```
     pub fn new() -> Self {
         let leaf_vec = Vec::new();
         let internal_vec = Vec::new();
@@ -49,35 +69,95 @@ impl<const D: Udim> BarnesHutTree<D> {
             internal_vec,
             root: None,
             bb: BoundBox::new_with_arr(&[0.0; D], 1.0),
-            nodes_num: 0,
             br_limit: DEFAULT_BR_LIMIT,
         }
     }
 
+    ///
+    ///  Construct a new Barnes Hut Tree with specified:
+    /// - the initial bounding center and radius (half width),
+    /// - the estimation of number of values ("bodies") it's going to contain,
+    ///
+    /// ## Example:
+    ///
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity(&[0.0,0.0],2.0, 100);
+    ///
+    /// bht.push(&[-1.0,1.0]);
+    /// bht.push(&[1.0,1.0]);
+    ///
+    /// let mut ans_displacement = [0.0; 2];
+    ///
+    /// bht.calc_force_on_value(0, |_,_,_| -> bool {false}, zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2), &mut ans_displacement);
+    ///
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
+    /// ```
     pub fn with_bounding_and_capacity(root_bc: &[Fnum; D], root_br: Fnum, len: usize) -> Self {
-        Self::with_bounding_capacity_and_limit(root_bc, root_br, len, DEFAULT_BR_LIMIT)
+        Self::with_bounding_and_capacity_and_limit(root_bc, root_br, len, DEFAULT_BR_LIMIT)
     }
 
-    pub fn with_bounding_capacity_and_limit(
+    /// Construct a new Barnes Hut Tree with specified:
+    /// - the initial bounding center and radius (half width),
+    /// - the estimation of number of values ("bodies") it's going to contain,
+    /// - the minimum "radius" (half width) of the hyper cube.
+    ///
+    /// ## Example:
+    ///
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity_and_limit(&[0.0,0.0],2.0, 100, 100.0);
+    ///
+    /// bht.push(&[-1.0,1.0]);
+    /// bht.push(&[1.0,1.0]);
+    ///
+    /// let mut ans_displacement = [0.0; 2];
+    ///
+    /// bht.calc_force_on_value(0, |_,_,_| -> bool {false}, zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2), &mut ans_displacement);
+    ///
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
+    /// assert_eq!(bht.get_total_nodes_num(), 1, "The total number of nodes inside the tree.")
+    /// ```
+    pub fn with_bounding_and_capacity_and_limit(
         root_bc: &[Fnum; D],
         root_br: Fnum,
         len: usize,
         br_limit: Fnum,
     ) -> Self {
-        let vs: Vec<(ColVec<D>, Option<(usize, usize)>)> = Vec::with_capacity(len);
-        let leaf_vec = Vec::with_capacity(len);
-        let internal_vec = Vec::with_capacity(len);
         Self {
-            vs,
-            leaf_vec,
-            internal_vec,
+            vs: Vec::with_capacity(len),
+            leaf_vec: Vec::with_capacity(len),
+            internal_vec: Vec::with_capacity(len),
             root: None,
             bb: BoundBox::new_with_arr(root_bc, root_br),
-            nodes_num: 0,
             br_limit,
         }
     }
-
+    /// Construct a new Barnes Hut Tree with specified:
+    /// - the initial bounding center and radius (half width),
+    /// - the to-insert values (bodies).
+    ///
+    /// ## Example:
+    ///
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0,0.0],2.0,&[[-1.0,1.0],[1.0,1.0]]);
+    ///
+    /// let mut ans_displacement = [0.0; 2];
+    ///
+    /// bht.calc_force_on_value(0, |_,_,_| -> bool {false}, zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2), &mut ans_displacement);
+    ///
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
+    /// ```
     pub fn with_bounding_and_values(
         root_bc: &[Fnum; D],
         root_br: Fnum,
@@ -90,6 +170,28 @@ impl<const D: Udim> BarnesHutTree<D> {
         temp_self
     }
 
+    /// Construct a new Barnes Hut Tree with specified:
+    /// - the initial bounding center and radius (half width),
+    /// - the to-insert values (bodies),
+    /// - the minimum "radius" (half width) of the hyper cube.
+    ///
+    /// ## Example:
+    ///
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let bht: BHTree<2> = BHTree::with_bounding_and_values_and_limit(&[0.0,0.0],2.0, &[[-1.0,1.0],[1.0,1.0]], 100.0);
+    ///
+    ///
+    /// let mut ans_displacement = [0.0; 2];
+    ///
+    /// bht.calc_force_on_value(0, |_,_,_| -> bool {false}, zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2), &mut ans_displacement);
+    ///
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
+    /// assert_eq!(bht.get_total_nodes_num(), 1, "The total number of nodes inside the tree.")
+    /// ```
     pub fn with_bounding_and_values_and_limit(
         root_bc: &[Fnum; D],
         root_br: Fnum,
@@ -104,6 +206,33 @@ impl<const D: Udim> BarnesHutTree<D> {
         temp_self
     }
 
+    /// Calculate force or other custom functions on a specific value (body).
+    ///
+    /// The function takes:
+    /// - a index of a target value
+    /// - a closure to determine whether a super node is "far" enough to be considered as a whole,
+    /// - a closure to calculate force or other relations between the target value and another super node (or value if the size is one),
+    /// - a custom struct to store and accumulate the results from the previous calculator function.
+    ///
+    /// ## Example:
+    ///
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0,0.0],2.0, &[[-1.0,1.0],[1.0,1.0]]);
+    ///
+    ///
+    /// let mut ans_displacement = [0.0; 2];
+    ///
+    /// let is_super_fn = |_: &[f64; 2],_: &[f64; 2],_: f64| -> bool {false}; // If every node is not far enough, the approximation will be the same (but slower due to tree traversal) as looping through all the nodes.
+    /// let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+    ///
+    /// bht.calc_force_on_value(0, &is_super_fn, &calc_fn, &mut ans_displacement);
+    ///
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
+    /// ```
     pub fn calc_force_on_value<T>(
         &self,
         value_i: usize,
@@ -118,7 +247,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         let mut curr_info =
             self.calc_leaf_siblings_and_get_parent(value_i, &calc_fn, write_to_value);
 
-        let mut q: VecDeque<&NodeIndex> = VecDeque::with_capacity(self.nodes_num / 2);
+        let mut q: VecDeque<&NodeIndex> = VecDeque::with_capacity(self.get_total_nodes_num() / 2);
         let curr_v_ref = &self.vs[value_i].0.data;
 
         while let Some((curr_internal_i, curr_in_leaf_i)) = curr_info {
@@ -153,7 +282,20 @@ impl<const D: Udim> BarnesHutTree<D> {
         }
         true
     }
-
+}
+/// Functions
+impl<const D: Udim> BarnesHutTree<D> {
+    /// Returns a reference of the current value (body)'s coordinates if the index is within-range.
+    /// ## Examples
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0,0.0],2.0, &[[-1.0,1.0],[1.0,1.0]]);
+    ///
+    /// assert_eq!(bht.get(0).unwrap(), &[-1.0,1.0]);
+    /// ```
     pub fn get(&self, value_i: usize) -> Option<&[Fnum; D]> {
         if value_i >= self.vs.len() {
             return None;
@@ -194,9 +336,9 @@ impl<const D: Udim> BarnesHutTree<D> {
             None
         }
     }
-
-    pub fn nodes_num(&self) -> usize {
-        self.nodes_num
+    #[inline]
+    pub fn get_total_nodes_num(&self) -> usize {
+        self.internal_vec.len() + self.leaf_vec.len()
     }
 }
 

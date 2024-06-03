@@ -25,7 +25,7 @@ pub struct BarnesHutTreeSer<const D: Udim> {
 }
 
 impl<const D: Udim> BarnesHutTreeSer<D> {
-    pub fn with_num_of_nodes(
+    pub(crate) fn with_num_of_nodes(
         num: usize,
         vs: &Vec<(ColVec<D>, Option<(usize, usize)>)>,
     ) -> BarnesHutTreeSer<D> {
@@ -62,7 +62,7 @@ impl<const D: Udim> BarnesHutTreeSer<D> {
         }
     }
 
-    pub fn add_node(
+    pub(crate) fn add_node(
         &mut self,
         parent_opt: Option<usize>,
         from_dir: Option<usize>,
@@ -125,9 +125,9 @@ impl<const D: Udim> BarnesHutTreeSer<D> {
 
 impl<const D: Udim> BarnesHutTree<D> {
     pub fn calc_serialized(&self) -> BarnesHutTreeSer<D> {
-        let mut ans = BarnesHutTreeSer::<D>::with_num_of_nodes(self.nodes_num, &self.vs);
-        let mut dq: VecDeque<(usize, Option<(usize, usize)>)> =
-            VecDeque::with_capacity(self.nodes_num);
+        let nodes_num = self.get_total_nodes_num();
+        let mut ans = BarnesHutTreeSer::<D>::with_num_of_nodes(nodes_num, &self.vs);
+        let mut dq: VecDeque<(usize, Option<(usize, usize)>)> = VecDeque::with_capacity(nodes_num);
 
         fn add_leaf<const D: Udim>(
             parent_opt: Option<usize>,

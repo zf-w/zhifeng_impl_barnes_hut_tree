@@ -24,7 +24,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     }
 
     /// # Remove a node from the tree
-    pub fn sub(&mut self, value_i: usize) {
+    pub(crate) fn sub(&mut self, value_i: usize) {
         let remove_direct_res = self.remove_from_direct_leaf(value_i);
 
         let internal_i = if let Some(v) = remove_direct_res {
@@ -44,6 +44,5 @@ impl<const D: Udim> BarnesHutTree<D> {
         };
 
         self.sub_value_util_root(internal_i, value_i);
-        debug_assert!(self.nodes_num() == self.leaf_vec.len() + self.internal_vec.len());
     }
 }
