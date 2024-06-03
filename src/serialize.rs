@@ -1,11 +1,10 @@
 use std::{
     collections::VecDeque,
     fmt::{Debug, Display},
-    ptr,
 };
 
 use crate::{
-    nodes::{Internal, Leaf, NodeBox},
+    nodes::{Leaf, NodeIndex},
     BarnesHutTree, ColVec, Fnum, Udim,
 };
 
@@ -28,7 +27,7 @@ pub struct BarnesHutTreeSer<const D: Udim> {
 impl<const D: Udim> BarnesHutTreeSer<D> {
     pub fn with_num_of_nodes(
         num: usize,
-        vs: &Vec<(ColVec<D>, Option<(*mut Leaf<D>, usize)>)>,
+        vs: &Vec<(ColVec<D>, Option<(usize, usize)>)>,
     ) -> BarnesHutTreeSer<D> {
         let vcs: Vec<Fnum> = Vec::with_capacity(num * D);
         let bcs: Vec<Fnum> = Vec::with_capacity(num * D);
@@ -127,7 +126,7 @@ impl<const D: Udim> BarnesHutTreeSer<D> {
 impl<const D: Udim> BarnesHutTree<D> {
     pub fn calc_serialized(&self) -> BarnesHutTreeSer<D> {
         let mut ans = BarnesHutTreeSer::<D>::with_num_of_nodes(self.nodes_num, &self.vs);
-        let mut dq: VecDeque<(*const Internal<D>, Option<(usize, usize)>)> =
+        let mut dq: VecDeque<(usize, Option<(usize, usize)>)> =
             VecDeque::with_capacity(self.nodes_num);
 
         fn add_leaf<const D: Udim>(
@@ -152,18 +151,23 @@ impl<const D: Udim> BarnesHutTree<D> {
         }
 
         match &self.root {
-            Some(NodeBox::In(next_box_ref)) => {
-                dq.push_back((ptr::addr_of!(**next_box_ref), None));
+            Some(NodeIndex::In(next_internal_i)) => {
+                dq.push_back((next_internal_i.clone(), None));
             }
-            Some(NodeBox::Le(next_leaf_ptr_ref)) => {
-                add_leaf(None, None, next_leaf_ptr_ref, &mut ans);
+            Some(NodeIndex::Le(next_leaf_i)) => {
+                add_leaf(
+                    None,
+                    None,
+                    self.leaf_vec.get(*next_leaf_i).unwrap(),
+                    &mut ans,
+                );
             }
             _ => (),
         }
 
         while !dq.is_empty() {
-            let (curr, parent_info) = dq.pop_front().expect("Just checked unempty");
-            let curr_ref = unsafe { curr.as_ref().expect("Dereferencing a next") };
+            let (curr_i, parent_info) = dq.pop_front().expect("Just checked unempty");
+            let curr_ref = self.internal_vec.get(curr_i).unwrap().as_ref();
             let (parent_opt, from_dir) = if let Some((parent_i, from_dir)) = parent_info {
                 (Some(parent_i), Some(from_dir))
             } else {
@@ -179,11 +183,16 @@ impl<const D: Udim> BarnesHutTree<D> {
             );
             for (from_dir, next) in curr_ref.nexts.iter().enumerate() {
                 match next {
-                    Some(NodeBox::In(next_box_ref)) => {
-                        dq.push_back((ptr::addr_of!(**next_box_ref), Some((curr_i, from_dir))));
+                    Some(NodeIndex::In(next_internal_i)) => {
+                        dq.push_back((*next_internal_i, Some((curr_i, from_dir))));
                     }
-                    Some(NodeBox::Le(next_leaf_ptr_ref)) => {
-                        add_leaf(Some(curr_i), Some(from_dir), &next_leaf_ptr_ref, &mut ans);
+                    Some(NodeIndex::Le(next_leaf_i)) => {
+                        add_leaf(
+                            Some(curr_i),
+                            Some(from_dir),
+                            self.leaf_vec.get(*next_leaf_i).unwrap(),
+                            &mut ans,
+                        );
                     }
                     _ => (),
                 }

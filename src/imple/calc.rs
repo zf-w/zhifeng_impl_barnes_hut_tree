@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use crate::{
-    nodes::{Internal, Leaf, NodeBox},
+    nodes::{Internal, Leaf, NodeIndex},
     BarnesHutTree, Fnum, Udim,
 };
 
@@ -10,24 +10,24 @@ impl<const D: Udim> BarnesHutTree<D> {
     pub(crate) fn calc_node<'o, T>(
         &'o self,
         curr_v_ref: &[Fnum; D],
-        node_box_ref: &'o NodeBox<D>,
-        q: &mut VecDeque<&'o NodeBox<D>>,
+        node_box_ref: &'o NodeIndex,
+        q: &mut VecDeque<&'o NodeIndex>,
         write_to: &mut T,
         calc_this: impl Fn(&[Fnum; D], &[Fnum; D], Fnum) -> bool,
         calc_fn: impl Fn(&[Fnum; D], &[Fnum; D], usize, &mut T),
     ) {
         match node_box_ref {
-            NodeBox::In(internal_ref) => self.calc_neighbour_internal(
+            NodeIndex::In(internal_i_ref) => self.calc_neighbour_internal(
                 curr_v_ref,
-                internal_ref.as_ref(),
+                self.internal_vec[*internal_i_ref].as_ref(),
                 q,
                 write_to,
                 &calc_this,
                 calc_fn,
             ),
-            NodeBox::Le(leaf_ref) => self.calc_neighbour_leaf(
+            NodeIndex::Le(leaf_i_ref) => self.calc_neighbour_leaf(
                 curr_v_ref,
-                leaf_ref.as_ref(),
+                self.leaf_vec[*leaf_i_ref].as_ref(),
                 write_to,
                 &calc_this,
                 calc_fn,
@@ -39,7 +39,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         &'o self,
         curr_v_ref: &[Fnum; D],
         internal_ref: &'o Internal<D>,
-        q: &mut VecDeque<&'o NodeBox<D>>,
+        q: &mut VecDeque<&'o NodeIndex>,
         write_to: &mut T,
         calc_this: impl Fn(&[Fnum; D], &[Fnum; D], Fnum) -> bool,
         mut calc_fn: impl FnMut(&[Fnum; D], &[Fnum; D], usize, &mut T),
@@ -91,9 +91,9 @@ impl<const D: Udim> BarnesHutTree<D> {
         value_i: usize,
         mut calc_fn: impl FnMut(&[Fnum; D], &[Fnum; D], usize, &mut T),
         write_to: &mut T,
-    ) -> Option<(*mut Internal<D>, usize)> {
-        let (curr_leaf_ptr, curr_in_leaf_i) = self.vs[value_i].1.expect("Should always have");
-        let curr_leaf_ref = unsafe { curr_leaf_ptr.as_ref().expect("Should be valid") };
+    ) -> Option<(usize, usize)> {
+        let (curr_leaf_i, curr_in_leaf_i) = self.vs[value_i].1.expect("Should always have");
+        let curr_leaf_ref = self.leaf_vec[curr_leaf_i].as_ref();
         let curr_v_ref = &self.vs[value_i].0.data;
         for (in_leaf_i, other_value_i) in curr_leaf_ref.vs.iter().enumerate() {
             if in_leaf_i == curr_in_leaf_i {

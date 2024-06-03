@@ -2,11 +2,11 @@ use std::ptr;
 
 use crate::{boundbox::BoundBox, colvec::ColVec, Udim};
 
-use super::{Leaf, NodeBox};
+use super::{Leaf, NodeIndex};
 
 pub struct Internal<const D: Udim> {
-    pub(crate) parent: Option<(*mut Self, usize)>,
-    pub(crate) nexts: Vec<Option<NodeBox<D>>>,
+    pub(crate) parent: Option<(usize, usize)>,
+    pub(crate) nexts: Vec<Option<NodeIndex>>,
 
     pub(crate) count: usize,
     pub(crate) vc: ColVec<D>,
@@ -37,7 +37,7 @@ impl<const D: Udim> Internal<D> {
         self.count -= 1;
     }
 
-    pub fn get_child_star_mut(&mut self, dir: &usize) -> *mut Option<NodeBox<D>> {
+    pub fn get_child_star_mut(&mut self, dir: &usize) -> *mut Option<NodeIndex> {
         ptr::addr_of_mut!(self.nexts[*dir])
     }
 
@@ -55,7 +55,7 @@ impl<const D: Udim> Internal<D> {
     }
 
     pub fn new_empty_with_vc_and_bb(bb: BoundBox<D>, vc: ColVec<D>, count: usize) -> Self {
-        let parent: Option<(*mut Internal<D>, usize)> = None;
+        let parent: Option<(usize, usize)> = None;
         let mut nexts = Vec::with_capacity(Self::DIM_LEN);
         for _ in 0..Self::DIM_LEN {
             nexts.push(None);
@@ -69,18 +69,22 @@ impl<const D: Udim> Internal<D> {
         }
     }
 
-    pub fn new_with_leaf_replacement(leaf_box: Box<Leaf<D>>) -> Box<Self> {
-        let bb = leaf_box.bb.clone();
-        let parent = leaf_box.parent;
-        let next_dir = bb.calc_next_dir(&leaf_box.vc);
+    pub fn new_with_leaf_replacement(
+        my_i: usize,
+        leaf_i: usize,
+        leaf_mut_ref: &mut Leaf<D>,
+    ) -> Box<Self> {
+        let bb = leaf_mut_ref.bb.clone();
+        let parent = leaf_mut_ref.parent;
+        let next_dir = bb.calc_next_dir(&leaf_mut_ref.vc);
 
         let mut curr_box = Internal::new_root(bb);
 
         curr_box.parent = parent;
-        curr_box.vc.clone_from(&leaf_box.vc);
-        curr_box.count = leaf_box.get_values_num_inside();
+        curr_box.vc.clone_from(&leaf_mut_ref.vc);
+        curr_box.count = leaf_mut_ref.get_values_num_inside();
 
-        curr_box.link_leaf_to_dir(next_dir, leaf_box);
+        curr_box.link_leaf_to_dir(next_dir, my_i, leaf_i, leaf_mut_ref);
 
         curr_box
     }
@@ -100,9 +104,15 @@ impl<const D: Udim> Internal<D> {
     }
 
     #[inline]
-    pub fn link_leaf_to_dir(&mut self, dir: usize, mut leaf_box: Box<Leaf<D>>) {
-        leaf_box.set_parent(ptr::addr_of_mut!(*self), dir);
-        self.nexts[dir] = Some(NodeBox::Le(leaf_box));
+    pub fn link_leaf_to_dir(
+        &mut self,
+        dir: usize,
+        my_i: usize,
+        leaf_i: usize,
+        leaf_mut_ref: &mut Leaf<D>,
+    ) {
+        leaf_mut_ref.set_parent(my_i, &self, dir);
+        self.nexts[dir] = Some(NodeIndex::Le(leaf_i));
     }
 
     #[inline]
@@ -111,7 +121,7 @@ impl<const D: Udim> Internal<D> {
     }
 
     #[inline]
-    pub fn drop_child(&mut self, dir: usize) {
+    pub fn drop_child(&mut self, dir: usize) -> Option<NodeIndex> {
         // if let Some(child_box) = self.nexts[dir].take() {
         //     match child_box {
         //         NodeBox::In(internal_box) => {
@@ -126,6 +136,6 @@ impl<const D: Udim> Internal<D> {
         //         }
         //     }
         // }
-        self.nexts[dir] = None;
+        self.nexts[dir].take()
     }
 }

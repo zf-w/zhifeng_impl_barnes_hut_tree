@@ -19,6 +19,7 @@ criterion = "0.3"
 
 [features]
 serialize = ["dep:serde", "dep:serde_json"]
+unchecked = []
 
 [[test]]
 name = "check_new"
@@ -26,8 +27,13 @@ required-features = ["serialize"]
 
 [[test]]
 name = "check_calc"
-required-features = ["serialize"]
+required-features = ["serialize", "unchecked"]
 
 [[bench]]
 name = "cmp_n_body_force_sim"
+harness = false
+
+[[bench]]
+name = "cmp_n_body_force_sim_unchecked"
+required-features = ["unchecked"]
 harness = false

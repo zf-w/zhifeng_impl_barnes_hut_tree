@@ -1,4 +1,4 @@
-use crate::{nodes::Internal, BarnesHutTree, Udim};
+use crate::{BarnesHutTree, Udim};
 
 impl<const D: Udim> BarnesHutTree<D> {
     /// # Removing the leaf value from the direct leaf node
@@ -20,52 +20,76 @@ impl<const D: Udim> BarnesHutTree<D> {
     /// If a leaf is holding only one value, we need to cut that leaf from its parent or the root.
     ///
     #[inline]
-    pub(super) fn remove_from_direct_leaf(&mut self, i: usize) -> Option<*mut Internal<D>> {
-        let (parent_leaf, idx) = self.vs[i].1.expect("We should only remove an added value");
+    pub(super) fn remove_from_direct_leaf(&mut self, i: usize) -> Option<usize> {
+        let (parent_leaf_i, idx) = self.vs[i].1.expect("We should only remove an added value");
 
         self.vs[i].1 = None;
 
-        let parent_leaf_mut_ref = unsafe {
-            parent_leaf
-                .as_mut()
-                .expect("Dereferencing direct leaf parent")
-        };
+        #[cfg(feature = "unchecked")]
+        let parent_leaf_mut_ref =
+            unsafe { self.leaf_vec.get_unchecked_mut(parent_leaf_i).as_mut() };
+
+        #[cfg(not(feature = "unchecked"))]
+        let parent_leaf_mut_ref = self.leaf_vec.get_mut(parent_leaf_i).unwrap().as_mut();
 
         if parent_leaf_mut_ref.get_values_num_inside() > 1 {
             let replaced_leaf_i = parent_leaf_mut_ref.sub_value(idx, &self.vs[i].0);
+
             if replaced_leaf_i > 0 {
-                self.vs[replaced_leaf_i]
-                    .1
-                    .as_mut()
-                    .expect("Using another leaf node to replace the removed")
-                    .1 = idx;
+                #[cfg(feature = "unchecked")]
+                {
+                    unsafe {
+                        self.vs
+                            .get_unchecked_mut(replaced_leaf_i)
+                            .1
+                            .as_mut()
+                            .unwrap_unchecked()
+                            .1 = idx
+                    };
+                }
+                #[cfg(not(feature = "unchecked"))]
+                {
+                    self.vs
+                        .get_mut(replaced_leaf_i)
+                        .expect("Should be pointing to this leaf")
+                        .1
+                        .as_mut()
+                        .expect("Using another leaf node to replace the removed")
+                        .1 = idx;
+                }
             }
 
-            if let Some((parent1_internal_ptr, _)) = parent_leaf_mut_ref.parent {
-                let parent1_internal_mut_ref = unsafe {
-                    parent1_internal_ptr
-                        .as_mut()
-                        .expect("Cutting the empty parent leaf")
-                };
-                parent1_internal_mut_ref.sub_value(&self.vs[i].0);
-
-                Some(parent1_internal_ptr)
+            if let Some((parent1_internal_i, _)) = parent_leaf_mut_ref.parent {
+                Some(parent1_internal_i)
             } else {
                 None
             }
         } else {
-            self.nodes_num -= 1;
-            if let Some((parent1_internal_ptr, dir)) = parent_leaf_mut_ref.parent {
-                let parent1_internal_mut_ref = unsafe {
-                    parent1_internal_ptr
-                        .as_mut()
-                        .expect("Cutting the empty parent leaf")
-                };
-                // parent1_internal_mut_ref.sub_value(&self.vs[i]);
-                parent1_internal_mut_ref.drop_child(dir);
-                Some(parent1_internal_ptr)
+            if let Some((parent1_internal_i, dir)) = parent_leaf_mut_ref.parent {
+                self.drop_child(parent1_internal_i, dir);
+
+                Some(parent1_internal_i)
             } else {
-                self.root = None;
+                #[cfg(feature = "unchecked")]
+                {
+                    self.root.take();
+                    self.drop_leaf(parent_leaf_i);
+                }
+                #[cfg(not(feature = "unchecked"))]
+                {
+                    use crate::nodes::NodeIndex;
+                    let to_drop = self.root.take();
+                    if let Some(node_i) = to_drop {
+                        match node_i {
+                            NodeIndex::In(_) => unreachable!(),
+                            NodeIndex::Le(leaf_i) => {
+                                assert!(leaf_i == parent_leaf_i);
+                                self.drop_leaf(leaf_i);
+                            }
+                        }
+                    }
+                }
+
                 None
             }
         }

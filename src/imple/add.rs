@@ -8,12 +8,12 @@ impl<const D: Udim> BarnesHutTree<D> {
     pub(crate) fn add(&mut self, value_i: usize) {
         self.expand_root(value_i);
 
-        let leaf_ptr = self.find_leaf_to_add_value(value_i);
+        let leaf_i = self.find_leaf_to_add_value(value_i);
 
-        let leaf_mut_ref = unsafe { leaf_ptr.as_mut().expect("The pointer position to add") };
+        let leaf_mut_ref = self.leaf_vec.get_mut(leaf_i).unwrap().as_mut();
 
-        let id = leaf_mut_ref.add_value(value_i, &self.vs[value_i].0); // One bug here, storing pointer pointing to stack.
+        let id = leaf_mut_ref.add_value(value_i, &self.vs[value_i].0);
 
-        self.vs[value_i].1 = Some((leaf_ptr, id));
+        self.vs[value_i].1 = Some((leaf_i, id));
     }
 }

@@ -18,15 +18,18 @@ mod boundbox;
 use boundbox::BoundBox;
 
 mod nodes;
-use nodes::{Leaf, NodeBox};
+use nodes::{Internal, Leaf, NodeIndex};
 
 /// # Barnes-Hut Tree
 ///
 /// This is Zhifeng's implementation of Barnes-Hut Tree for accelerated N-body force calculation.
 pub struct BarnesHutTree<const D: Udim> {
-    vs: Vec<(ColVec<D>, Option<(*mut Leaf<D>, usize)>)>,
+    vs: Vec<(ColVec<D>, Option<(usize, usize)>)>,
 
-    root: Option<NodeBox<D>>,
+    leaf_vec: Vec<Box<Leaf<D>>>,
+    internal_vec: Vec<Box<Internal<D>>>,
+
+    root: Option<NodeIndex>,
 
     nodes_num: usize,
     bb: BoundBox<D>,
@@ -38,8 +41,12 @@ mod imple;
 
 impl<const D: Udim> BarnesHutTree<D> {
     pub fn new() -> Self {
+        let leaf_vec = Vec::new();
+        let internal_vec = Vec::new();
         Self {
             vs: Vec::new(),
+            leaf_vec,
+            internal_vec,
             root: None,
             bb: BoundBox::new_with_arr(&[0.0; D], 1.0),
             nodes_num: 0,
@@ -57,9 +64,13 @@ impl<const D: Udim> BarnesHutTree<D> {
         len: usize,
         br_limit: Fnum,
     ) -> Self {
-        let vs: Vec<(ColVec<D>, Option<(*mut Leaf<D>, usize)>)> = Vec::with_capacity(len);
+        let vs: Vec<(ColVec<D>, Option<(usize, usize)>)> = Vec::with_capacity(len);
+        let leaf_vec = Vec::with_capacity(len);
+        let internal_vec = Vec::with_capacity(len);
         Self {
             vs,
+            leaf_vec,
+            internal_vec,
             root: None,
             bb: BoundBox::new_with_arr(root_bc, root_br),
             nodes_num: 0,
@@ -107,15 +118,11 @@ impl<const D: Udim> BarnesHutTree<D> {
         let mut curr_info =
             self.calc_leaf_siblings_and_get_parent(value_i, &calc_fn, write_to_value);
 
-        let mut q: VecDeque<&NodeBox<D>> = VecDeque::with_capacity(self.nodes_num / 2);
+        let mut q: VecDeque<&NodeIndex> = VecDeque::with_capacity(self.nodes_num / 2);
         let curr_v_ref = &self.vs[value_i].0.data;
 
-        while let Some((curr_internal_ptr, curr_in_leaf_i)) = curr_info {
-            let curr_internal_ref = unsafe {
-                curr_internal_ptr
-                    .as_ref()
-                    .expect("Should work if the structure is correct")
-            };
+        while let Some((curr_internal_i, curr_in_leaf_i)) = curr_info {
+            let curr_internal_ref = self.internal_vec[curr_internal_i].as_ref();
             for (in_leaf_i, node_opt) in curr_internal_ref.nexts.iter().enumerate() {
                 if in_leaf_i == curr_in_leaf_i {
                     continue;
@@ -195,8 +202,7 @@ impl<const D: Udim> BarnesHutTree<D> {
 
 pub mod utils;
 
-#[cfg(feature = "serialize")]
+#[cfg(any(feature = "serialize"))]
 mod serialize;
-
-#[cfg(feature = "serialize")]
+#[cfg(any(feature = "serialize"))]
 pub use serialize::BarnesHutTreeSer;

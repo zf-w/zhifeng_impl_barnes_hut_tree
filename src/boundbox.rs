@@ -110,58 +110,62 @@ impl<const D: Udim> BoundBox<D> {
     }
 }
 
-#[test]
-fn check_calc_next_dir() {
-    let bc_arr = [0.0, 0.0, 0.0];
-    let bb = BoundBox::new_with_arr(&bc_arr, 2.0);
-    let vc_7 = ColVec::new_with_arr(&[1.0, 1.0, 1.0]);
-    assert_eq!(7, bb.calc_next_dir(&vc_7));
-    let vc_3 = ColVec::new_with_arr(&[-1.0, 1.0, 1.0]);
-    assert_eq!(3, bb.calc_next_dir(&vc_3));
-}
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn check_calc_next_dir() {
+        let bc_arr = [0.0, 0.0, 0.0];
+        let bb = BoundBox::new_with_arr(&bc_arr, 2.0);
+        let vc_7 = ColVec::new_with_arr(&[1.0, 1.0, 1.0]);
+        assert_eq!(7, bb.calc_next_dir(&vc_7));
+        let vc_3 = ColVec::new_with_arr(&[-1.0, 1.0, 1.0]);
+        assert_eq!(3, bb.calc_next_dir(&vc_3));
+    }
 
-#[test]
-fn check_calc_child_bb() {
-    let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
-    let expected_bb_7 = BoundBox::new_with_arr(&[1.0, 1.0, 1.0], 1.0);
-    assert_eq!(expected_bb_7, bb.calc_child_bb(&7));
-    let expected_bb_3 = BoundBox::new_with_arr(&[-1.0, 1.0, 1.0], 1.0);
-    assert_eq!(expected_bb_3, bb.calc_child_bb(&3));
-}
+    #[test]
+    fn check_calc_child_bb() {
+        let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
+        let expected_bb_7 = BoundBox::new_with_arr(&[1.0, 1.0, 1.0], 1.0);
+        assert_eq!(expected_bb_7, bb.calc_child_bb(&7));
+        let expected_bb_3 = BoundBox::new_with_arr(&[-1.0, 1.0, 1.0], 1.0);
+        assert_eq!(expected_bb_3, bb.calc_child_bb(&3));
+    }
 
-#[test]
-fn check_is_containing_vc() {
-    let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
-    let vc0 = ColVec::new_with_arr(&[3.0, 0.0, 0.0]);
-    let vc1 = ColVec::new_with_arr(&[0.0, 1.0, 0.0]);
-    let vc2 = ColVec::new_with_arr(&[0.0, 3.0, 0.0]);
-    assert_eq!(bb.is_containing(&vc0), false);
-    assert_eq!(bb.is_containing(&vc1), true);
-    assert_eq!(bb.is_containing(&vc2), false);
-}
+    #[test]
+    fn check_is_containing_vc() {
+        let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
+        let vc0 = ColVec::new_with_arr(&[3.0, 0.0, 0.0]);
+        let vc1 = ColVec::new_with_arr(&[0.0, 1.0, 0.0]);
+        let vc2 = ColVec::new_with_arr(&[0.0, 3.0, 0.0]);
+        assert_eq!(bb.is_containing(&vc0), false);
+        assert_eq!(bb.is_containing(&vc1), true);
+        assert_eq!(bb.is_containing(&vc2), false);
+    }
 
-#[test]
-fn check_calc_reverse_bc_0() {
-    let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
-    let vc = ColVec::new_with_arr(&[3.0, 0.0, 0.0]);
+    #[test]
+    fn check_calc_reverse_bc_0() {
+        let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
+        let vc = ColVec::new_with_arr(&[3.0, 0.0, 0.0]);
 
-    let (new_bb, dir) = bb.calc_reverse_expand_bb(&vc);
+        let (new_bb, dir) = bb.calc_reverse_expand_bb(&vc);
 
-    assert_eq!(new_bb.bc.data, [2.0, 2.0, 2.0]);
-    assert_eq!(new_bb.br, 4.0);
-    assert_eq!(dir, 0);
-    assert_eq!(new_bb.calc_child_bb(&dir).bc, bb.bc);
-}
+        assert_eq!(new_bb.bc.data, [2.0, 2.0, 2.0]);
+        assert_eq!(new_bb.br, 4.0);
+        assert_eq!(dir, 0);
+        assert_eq!(new_bb.calc_child_bb(&dir).bc, bb.bc);
+    }
 
-#[test]
-fn check_calc_reverse_bc_1() {
-    let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
-    let vc = ColVec::new_with_arr(&[3.0, -1.0, -1.0]);
+    #[test]
+    fn check_calc_reverse_bc_1() {
+        let bb = BoundBox::new_with_arr(&[0.0, 0.0, 0.0], 2.0);
+        let vc = ColVec::new_with_arr(&[3.0, -1.0, -1.0]);
 
-    let (new_bb, dir) = bb.calc_reverse_expand_bb(&vc);
+        let (new_bb, dir) = bb.calc_reverse_expand_bb(&vc);
 
-    assert_eq!(new_bb.bc.data, [2.0, -2.0, -2.0]);
-    assert_eq!(new_bb.br, 4.0);
-    assert_eq!(dir, 3);
-    assert_eq!(new_bb.calc_child_bb(&dir).bc, bb.bc);
+        assert_eq!(new_bb.bc.data, [2.0, -2.0, -2.0]);
+        assert_eq!(new_bb.br, 4.0);
+        assert_eq!(dir, 3);
+        assert_eq!(new_bb.calc_child_bb(&dir).bc, bb.bc);
+    }
 }
