@@ -2,6 +2,10 @@
 name = "zhifeng_impl_barnes_hut_tree"
 version = "0.0.20240527"
 edition = "2021"
+categories = ["data-structures"]
+description = ""
+license = "AGPL-3.0-only"
+readme = "ReadMe.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

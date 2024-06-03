@@ -1,10 +1,15 @@
-use std::{collections::VecDeque, fmt::Debug, ptr};
+use std::{
+    collections::VecDeque,
+    fmt::{Debug, Display},
+    ptr,
+};
 
 use crate::{
     nodes::{Internal, Leaf, NodeBox},
     BarnesHutTree, ColVec, Fnum, Udim,
 };
 
+/// # The serialized form of Barnes Hut Tree
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct BarnesHutTreeSer<const D: Udim> {
     dim: usize,
@@ -221,91 +226,15 @@ impl<const D: Udim> Debug for BarnesHutTree<D> {
     }
 }
 
-pub fn assert_bht_serde_eq<const D: Udim>(
-    calc_bht_ser: &BarnesHutTreeSer<D>,
-    expected_bht_ser: &BarnesHutTreeSer<D>,
-) {
-    let mut all_match = true;
-
-    fn assert_print<T: PartialEq + Debug>(got: &T, expected: &T, all_match: &mut bool, name: &str) {
-        if got != expected {
-            *all_match = false;
-            println!(
-                "{} do not match.\nExpected: {:?}\n     Got: {:?}",
-                name, expected, got
-            );
-        }
+impl<const D: Udim> Display for BarnesHutTree<D> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "{}",
+            match serde_json::to_string(&self.calc_serialized()) {
+                Ok(s) => s,
+                Err(_) => return std::fmt::Result::Err(std::fmt::Error),
+            }
+        ))?;
+        Ok(())
     }
-
-    assert_print(
-        calc_bht_ser.get_num(),
-        expected_bht_ser.get_num(),
-        &mut all_match,
-        "Tree: Total Node Number",
-    );
-    assert_print(
-        calc_bht_ser.get_bcs(),
-        expected_bht_ser.get_bcs(),
-        &mut all_match,
-        "Node: Bounding Box Centers",
-    );
-    assert_print(
-        calc_bht_ser.get_brs(),
-        expected_bht_ser.get_brs(),
-        &mut all_match,
-        "Node: Bounding Box Ranges",
-    );
-    assert_print(
-        calc_bht_ser.get_vcs(),
-        expected_bht_ser.get_vcs(),
-        &mut all_match,
-        "Node: Value Centers",
-    );
-    assert_print(
-        calc_bht_ser.get_ns(),
-        expected_bht_ser.get_ns(),
-        &mut all_match,
-        "Node: Number of Values Inside",
-    );
-    assert_print(
-        calc_bht_ser.get_leaf_nums(),
-        expected_bht_ser.get_leaf_nums(),
-        &mut all_match,
-        "Node: Number of Leaves Inside",
-    );
-    assert_print(
-        calc_bht_ser.get_parents(),
-        expected_bht_ser.get_parents(),
-        &mut all_match,
-        "Node: Parents",
-    );
-
-    assert_print(
-        calc_bht_ser.get_from_dirs(),
-        expected_bht_ser.get_from_dirs(),
-        &mut all_match,
-        "Node: From which direction",
-    );
-
-    assert_print(
-        calc_bht_ser.get_vs(),
-        expected_bht_ser.get_vs(),
-        &mut all_match,
-        "Value: value of bodies",
-    );
-
-    assert_print(
-        calc_bht_ser.get_to_leafs(),
-        expected_bht_ser.get_to_leafs(),
-        &mut all_match,
-        "Value: each value's corresponding leaf node",
-    );
-
-    assert_print(
-        calc_bht_ser.get_idxs(),
-        expected_bht_ser.get_idxs(),
-        &mut all_match,
-        "Value: each value's corresponding index inside leaf node",
-    );
-    assert!(all_match);
 }

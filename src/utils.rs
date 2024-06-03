@@ -23,10 +23,10 @@ pub fn factory_of_repulsive_displacement_calc_fn<const D: Udim>(
     c: Fnum,
 ) -> impl Fn(&[Fnum; D], &[Fnum; D], usize, &mut [Fnum; D]) {
     move |curr_v_ref: &[Fnum; D],
-          v_center: &[Fnum; D],
+          other_vc_ref: &[Fnum; D],
           num: usize,
-          ans_v_mut_ref: &mut [Fnum; D]| {
-        let diff = calc_v0_to_v1_diff(v_center, curr_v_ref);
+          ans_mut_ref: &mut [Fnum; D]| {
+        let diff = calc_v0_to_v1_diff(other_vc_ref, curr_v_ref);
         let dis_pow2 = calc_l2_norm(&diff);
         let dis_pow2 = if dis_pow2.is_finite() && dis_pow2 > DEFAULT_EPSILON {
             dis_pow2
@@ -35,7 +35,32 @@ pub fn factory_of_repulsive_displacement_calc_fn<const D: Udim>(
         };
         let scalar = num as Fnum * k * k * c / dis_pow2;
         for d in 0..D {
-            ans_v_mut_ref[d] += diff[d] * scalar;
+            ans_mut_ref[d] += diff[d] * scalar;
+        }
+    }
+}
+
+pub fn factory_of_repulsive_displacement_with_energy_calc_fn<const D: Udim>(
+    k: Fnum,
+    c: Fnum,
+) -> impl Fn(&[Fnum; D], &[Fnum; D], usize, &mut ([Fnum; D], Fnum)) {
+    move |curr_v_ref: &[Fnum; D],
+          other_vc_ref: &[Fnum; D],
+          num: usize,
+          ans_mut_ref: &mut ([Fnum; D], Fnum)| {
+        let diff = calc_v0_to_v1_diff(other_vc_ref, curr_v_ref);
+        let dis_pow2 = calc_l2_norm(&diff);
+        let dis = dis_pow2.sqrt();
+        let dis_pow2 = if dis_pow2.is_finite() && dis_pow2 > DEFAULT_EPSILON {
+            dis_pow2
+        } else {
+            DEFAULT_EPSILON
+        };
+        let num_f = num as Fnum;
+        ans_mut_ref.1 += num_f * k * k * c / dis;
+        let scalar = num_f * k * k * c / dis_pow2;
+        for d in 0..D {
+            ans_mut_ref.0[d] += diff[d] * scalar;
         }
     }
 }

@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use crate::{colvec::ColVec, Fnum, Udim};
 
 #[derive(Clone, PartialEq, Debug)]
@@ -11,13 +9,19 @@ pub struct BoundBox<const D: Udim> {
 impl<const D: Udim> BoundBox<D> {
     const DIM: usize = D;
 
+    #[inline]
     pub fn new_with_arr(bc: &[Fnum; D], br: Fnum) -> Self {
+        assert!(
+            br.is_finite(),
+            "The range of a bounding box does not seem finite..."
+        );
         Self {
             bc: ColVec::new_with_arr(bc),
             br,
         }
     }
 
+    #[inline]
     pub fn calc_next_dir(&self, vc: &ColVec<D>) -> usize {
         let m: usize = 1 << (Self::DIM - 1);
         let mut ans = 0;
@@ -29,15 +33,16 @@ impl<const D: Udim> BoundBox<D> {
         ans
     }
 
+    #[inline]
     pub fn calc_child_bb(&self, i: &usize) -> Self {
-        let mut ans: ColVec<D> = ColVec::clone(&self.bc);
-        let ans_r = self.br * 0.5;
+        let mut ans_bc: ColVec<D> = ColVec::clone(&self.bc);
+        let ans_br = self.br * 0.5;
 
         let mask: usize = 1 << (Self::DIM - 1);
         for d in 0..D {
-            ans.data[d] += if (i & mask >> d) > 0 { ans_r } else { -ans_r };
+            ans_bc.data[d] += if (i & mask >> d) > 0 { ans_br } else { -ans_br };
         }
-        BoundBox { bc: ans, br: ans_r }
+        Self::new_with_arr(&ans_bc.data, ans_br)
     }
 
     pub fn calc_reverse_expand_bb(&self, vc: &ColVec<D>) -> (Self, usize) {
@@ -56,13 +61,7 @@ impl<const D: Udim> BoundBox<D> {
             }
         }
         ans_br *= 2.0;
-        (
-            Self {
-                bc: ans_bc,
-                br: ans_br,
-            },
-            dir,
-        )
+        (Self::new_with_arr(&ans_bc.data, ans_br), dir)
     }
 
     pub fn self_expand(&mut self, vc: &ColVec<D>) {
@@ -73,8 +72,16 @@ impl<const D: Udim> BoundBox<D> {
             } else {
                 *curr_v -= self.br;
             }
+            assert!(
+                curr_v.is_finite(),
+                "The bounding box center seem to become not finite during expanding..."
+            )
         }
         self.br *= 2.0;
+        assert!(
+            self.br.is_finite(),
+            "The bounding box radius seem to become not finite during expanding..."
+        )
     }
 
     pub fn is_containing(&self, vc: &ColVec<D>) -> bool {
@@ -89,6 +96,7 @@ impl<const D: Udim> BoundBox<D> {
         true
     }
 
+    #[inline]
     pub fn set_self_from_parent_bb_and_dir(&mut self, parent_bb: &Self, dir: usize) {
         self.bc = parent_bb.bc.clone();
         let ans_r = parent_bb.br * 0.5;
@@ -99,18 +107,6 @@ impl<const D: Udim> BoundBox<D> {
             self.bc.data[d] += if (dir & curr_mask) > 0 { ans_r } else { -ans_r };
         }
         self.br = ans_r;
-    }
-}
-
-impl<const D: Udim> Display for BoundBox<D> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("{ bc: [")?;
-        for i in 0..(D - 1) {
-            f.write_fmt(format_args!("{},", self.bc.data[i]))?;
-        }
-        f.write_fmt(format_args!("{}", self.bc.data[D - 1]))?;
-        f.write_fmt(format_args!("], r: {}}}", self.br))?;
-        Ok(())
     }
 }
 

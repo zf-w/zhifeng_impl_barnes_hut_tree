@@ -12,7 +12,7 @@ fn check_calc_on_tree_with_one_internal_insertion() -> Result<(), Box<dyn std::e
     const D: usize = 2;
     let vals: Vec<[f64; D]> = vec![[1.0, 3.0], [3.0, 1.0]];
 
-    let bht: BHTree<D> = BHTree::new_with_values(&[0.0, 0.0], 4.0, &vals);
+    let bht: BHTree<D> = BHTree::with_bounding_and_values(&[0.0, 0.0], 4.0, &vals);
 
     let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
 
@@ -50,16 +50,34 @@ fn assert_values_close<const D: Udim>(value_0: &[Fnum; D], value_1: &[Fnum; D], 
     assert!(close, "     Got:{:?}\nExpected:{:?}", value_0, value_1);
 }
 
+fn assert_values_and_energy_close<const D: Udim>(
+    value_0: &([Fnum; D], Fnum),
+    value_1: &([Fnum; D], Fnum),
+    limit: Fnum,
+) {
+    let mut close = true;
+    for d in 0..D {
+        if (value_0.0[d] - value_1.0[d]).abs() > limit {
+            close = false;
+        }
+    }
+    if (value_0.1 - value_1.1).abs() > limit {
+        close = false;
+    }
+    assert!(close, "     Got:{:?}\nExpected:{:?}", value_0, value_1);
+}
+
 #[test]
 fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Error>> {
     const D: usize = 2;
     let len = 100;
     let values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
-    let bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 5.0, &values);
+    let bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
 
     println!("Number of Nodes: {}", bht.nodes_num());
 
     let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+
     for value_i in 0..len {
         let mut displacement = [0.0; D];
         let mut expected_displacement = [0.0; D];
@@ -69,6 +87,9 @@ fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Err
             &calc_fn,
             &mut displacement,
         );
+
+        // displacement = probe.export();
+        // probe.reset();
 
         for value_j in 0..len {
             if value_j == value_i {
@@ -81,6 +102,9 @@ fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Err
                 &mut expected_displacement,
             );
         }
+        // drop(calc_fn);
+        // expected_displacement = probe.export();
+        // probe.reset();
 
         assert_values_close(&displacement, &expected_displacement, 1e-9);
     }
@@ -88,18 +112,19 @@ fn check_exact_calc_on_100_random_values() -> Result<(), Box<dyn std::error::Err
 }
 
 #[test]
-fn check_exact_force_simulation_on_100_random_values() -> Result<(), Box<dyn std::error::Error>> {
+fn check_exact_force_simulation_on_100_random_values_with_energy(
+) -> Result<(), Box<dyn std::error::Error>> {
     const D: usize = 2;
     let len = 100;
     let mut values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
-    let mut bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 5.0, &values);
+    let mut bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
 
     println!("Number of Nodes: {}", bht.nodes_num());
 
-    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_with_energy_calc_fn::<2>(1.0, 0.2);
     for value_i in 0..len {
-        let mut displacement = [0.0; D];
-        let mut expected_displacement = [0.0; D];
+        let mut displacement = ([0.0; D], 0.0);
+        let mut expected_displacement = ([0.0; D], 0.0);
         bht.calc_force_on_value(
             value_i,
             |_, _, _| -> bool { false },
@@ -119,11 +144,11 @@ fn check_exact_force_simulation_on_100_random_values() -> Result<(), Box<dyn std
             );
         }
 
-        assert_values_close(&displacement, &expected_displacement, 1e-9);
+        assert_values_and_energy_close(&displacement, &expected_displacement, 1e-9);
 
         let mut new_value = values[value_i].clone();
         for d in 0..D {
-            new_value[d] += displacement[d];
+            new_value[d] += displacement.0[d];
         }
 
         values[value_i].clone_from(&new_value);
@@ -137,7 +162,7 @@ fn check_exact_force_simulation_on_1000_random_values() -> Result<(), Box<dyn st
     const D: usize = 2;
     let len = 1000;
     let mut values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
-    let mut bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 5.0, &values);
+    let mut bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
 
     println!("Number of Nodes: {}", bht.nodes_num());
 

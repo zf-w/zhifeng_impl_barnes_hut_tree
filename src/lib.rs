@@ -1,3 +1,9 @@
+//! # Barnes-Hut Tree for accelerated N-body force calculation
+//!
+//!
+
+const DEFAULT_BR_LIMIT: Fnum = 1e-8;
+
 type Fnum = f64;
 type Udim = usize;
 
@@ -14,7 +20,9 @@ use boundbox::BoundBox;
 mod nodes;
 use nodes::{Leaf, NodeBox};
 
-/// # Zhifeng's implementation of Barnes-Hut Tree
+/// # Barnes-Hut Tree
+///
+/// This is Zhifeng's implementation of Barnes-Hut Tree for accelerated N-body force calculation.
 pub struct BarnesHutTree<const D: Udim> {
     vs: Vec<(ColVec<D>, Option<(*mut Leaf<D>, usize)>)>,
 
@@ -28,14 +36,22 @@ pub struct BarnesHutTree<const D: Udim> {
 
 mod imple;
 
-const DEFAULT_BR_LIMIT: Fnum = 1e-8;
-
 impl<const D: Udim> BarnesHutTree<D> {
-    pub fn with_capacity(root_bc: &[Fnum; D], root_br: Fnum, len: usize) -> Self {
-        Self::with_capacity_and_limit(root_bc, root_br, len, DEFAULT_BR_LIMIT)
+    pub fn new() -> Self {
+        Self {
+            vs: Vec::new(),
+            root: None,
+            bb: BoundBox::new_with_arr(&[0.0; D], 1.0),
+            nodes_num: 0,
+            br_limit: DEFAULT_BR_LIMIT,
+        }
     }
 
-    pub fn with_capacity_and_limit(
+    pub fn with_bounding_and_capacity(root_bc: &[Fnum; D], root_br: Fnum, len: usize) -> Self {
+        Self::with_bounding_capacity_and_limit(root_bc, root_br, len, DEFAULT_BR_LIMIT)
+    }
+
+    pub fn with_bounding_capacity_and_limit(
         root_bc: &[Fnum; D],
         root_br: Fnum,
         len: usize,
@@ -51,15 +67,19 @@ impl<const D: Udim> BarnesHutTree<D> {
         }
     }
 
-    pub fn new_with_values(root_bc: &[Fnum; D], root_br: Fnum, vals: &[[Fnum; D]]) -> Self {
-        let mut temp_self = Self::new_without_add(root_bc, root_br, vals, 0.00000001);
+    pub fn with_bounding_and_values(
+        root_bc: &[Fnum; D],
+        root_br: Fnum,
+        vals: &[[Fnum; D]],
+    ) -> Self {
+        let mut temp_self = Self::new_without_add(root_bc, root_br, vals, DEFAULT_BR_LIMIT);
         for i in 0..vals.len() {
             temp_self.add(i);
         }
         temp_self
     }
 
-    pub fn new_with_values_and_limit(
+    pub fn with_bounding_and_values_and_limit(
         root_bc: &[Fnum; D],
         root_br: Fnum,
         vals: &[[Fnum; D]],
@@ -73,19 +93,19 @@ impl<const D: Udim> BarnesHutTree<D> {
         temp_self
     }
 
-    pub fn calc_force_on_value(
+    pub fn calc_force_on_value<T>(
         &self,
         value_i: usize,
         is_super_node: impl Fn(&[Fnum; D], &[Fnum; D], Fnum) -> bool,
-        calc_fn: impl Fn(&[Fnum; D], &[Fnum; D], usize, &mut [Fnum; D]),
-        mut write_to_value: &mut [Fnum; D],
+        calc_fn: impl Fn(&[Fnum; D], &[Fnum; D], usize, &mut T),
+        write_to_value: &mut T,
     ) -> bool {
         if value_i >= self.vs.len() {
             return false;
         }
 
         let mut curr_info =
-            self.calc_leaf_siblings_and_get_parent(value_i, &calc_fn, &mut write_to_value);
+            self.calc_leaf_siblings_and_get_parent(value_i, &calc_fn, write_to_value);
 
         let mut q: VecDeque<&NodeBox<D>> = VecDeque::with_capacity(self.nodes_num / 2);
         let curr_v_ref = &self.vs[value_i].0.data;
@@ -105,7 +125,7 @@ impl<const D: Udim> BarnesHutTree<D> {
                         curr_v_ref,
                         curr_node_box_ref,
                         &mut q,
-                        &mut write_to_value,
+                        write_to_value,
                         &is_super_node,
                         &calc_fn,
                     )
@@ -119,7 +139,7 @@ impl<const D: Udim> BarnesHutTree<D> {
                 curr_v_ref,
                 curr_node_box_ref,
                 &mut q,
-                &mut write_to_value,
+                write_to_value,
                 &is_super_node,
                 &calc_fn,
             )
@@ -179,4 +199,4 @@ pub mod utils;
 mod serialize;
 
 #[cfg(feature = "serialize")]
-pub use serialize::{assert_bht_serde_eq, BarnesHutTreeSer};
+pub use serialize::BarnesHutTreeSer;

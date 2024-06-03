@@ -55,7 +55,7 @@ fn check_tree_force_simulation_on_random_values(
 ) -> Result<(), Box<dyn std::error::Error>> {
     const D: usize = 2;
     let values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
-    let mut bht: BHTree<2> = BHTree::new_with_values(&[0.0, 0.0], 5.0, &values);
+    let mut bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
 
     let is_super_fn = zbht::utils::factory_of_is_super_node_fn::<D>(1.2);
     let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
