@@ -50,7 +50,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// use zbht::BarnesHutTree as BHTree;
     ///
-    /// let bht: BHTree<2> = BHTree::new();
+    /// let mut bht: BHTree<2> = BHTree::new();
     /// bht.push(&[-1.0,1.0]);
     /// bht.push(&[1.0,1.0]);
     ///
@@ -283,10 +283,18 @@ impl<const D: Udim> BarnesHutTree<D> {
         true
     }
 }
-/// Functions
+
+/// # Utilities
+///
+/// These functions are about getting, pushing, removing, and updating values (bodies) inside the tree.
 impl<const D: Udim> BarnesHutTree<D> {
+    /// Getting a reference of the stored value's coordinates.
+    ///
+    ///  # Return
+    ///
     /// Returns a reference of the current value (body)'s coordinates if the index is within-range.
-    /// ## Examples
+    ///
+    /// # Example
     /// ```
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
@@ -303,39 +311,160 @@ impl<const D: Udim> BarnesHutTree<D> {
         Some(&self.vs[value_i].0.data)
     }
 
-    pub fn push(&mut self, value: &[Fnum; D]) -> usize {
+    /// Pushes a value into the tree.
+    ///
+    /// # Return
+    ///
+    /// The function will return the value's corresponding value-index `usize` in the tree.
+    /// This design is mainly for easier mapping of values in case we want to connect the values with other format of keys, for example, `String` or `usize` that is not filling an entire range from `0..len`.
+    ///
+    /// # Example:
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity(&[0.0,0.0],2.0, 100);
+    ///
+    /// bht.push(&[-1.0,1.0]);
+    /// let idx = bht.push(&[1.0,1.0]);
+    ///
+    /// assert_eq!(bht.get(0).unwrap(), &[-1.0,1.0]);
+    /// assert_eq!(bht.get(idx).unwrap(), &[1.0,1.0]);
+    /// ```
+    pub fn push(&mut self, value_ref: &[Fnum; D]) -> usize {
         let value_i = self.vs.len();
-        self.vs.push((ColVec::new_with_arr(value), None));
+        self.vs.push((ColVec::new_with_arr(value_ref), None));
 
         self.add(value_i);
         value_i
     }
 
-    pub fn update(&mut self, value_i: usize, value: &[Fnum; D]) -> bool {
+    /// Update the coordinates of a value.
+    ///
+    /// # Return
+    ///
+    /// A boolean indicating whether the update is successful. The update will usually be successful if the value-index is pointing to a valid value.
+    ///
+    /// # Example
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity(&[0.0,0.0],2.0, 100);
+    ///
+    /// bht.push(&[-0.5,1.0]);
+    /// let idx = bht.push(&[1.0,1.0]);
+    ///
+    /// bht.update(0, &[-1.0,1.0]);
+    ///
+    /// assert_eq!(bht.get(0).unwrap(), &[-1.0,1.0]);
+    /// assert_eq!(bht.get(idx).unwrap(), &[1.0,1.0]);
+    /// ```
+    pub fn update(&mut self, value_i: usize, value_ref: &[Fnum; D]) -> bool {
         let len = self.vs.len();
         if value_i >= len {
             return false;
         }
         self.sub(value_i);
-        self.vs[value_i].0.clone_from_arr_ref(value);
+        debug_assert!(
+            self.vs[value_i].1.is_none(),
+            "The to_leaf index should be `None`."
+        );
+        self.vs[value_i].0.clone_from_arr_ref(value_ref);
         self.add(value_i);
         true
     }
 
-    pub fn remove(&mut self, value_i: usize) -> Option<(usize, usize)> {
-        let len = self.vs.len();
-        if value_i >= len {
+    /// Remove a value from the tree.
+    ///
+    /// # Return
+    ///
+    /// Since the underlying structure uses `vec` to store nodes, if a value that is not the last one in the `vec` needs to be removed, the last value from the `vec` will replace its position. The function returns an option of an index `usize` to indicate which value was moved to that position to replace the removed one (always the previous last one). If the to-remove value is the last one, or the index is out-of-range, the function will return a `None`.
+    ///
+    /// # Example
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity(&[0.0,0.0],2.0, 100);
+    ///
+    /// bht.push(&[-0.5,1.0]);
+    /// bht.push(&[1.0,1.0]);
+    ///
+    /// let old_i = bht.remove(0).unwrap();
+    ///
+    /// assert_eq!(old_i, 1);
+    /// assert_eq!(bht.get(0).unwrap(), &[1.0,1.0]);
+    /// ```
+    pub fn remove(&mut self, value_i: usize) -> Option<usize> {
+        let last_i = self.vs.len() - 1;
+        if value_i > last_i {
             return None;
         }
         self.sub(value_i);
-        if value_i + 1 < len {
-            let last_v_opt = self.vs.pop().expect("Should have a last");
+        let last_v_opt = self.vs.pop().expect("Should have a last");
+        if value_i < last_i {
+            if let Some((leaf_i, in_leaf_i)) = last_v_opt.1 {
+                #[cfg(not(feature = "unchecked"))]
+                {
+                    *self
+                        .leaf_vec
+                        .get_mut(leaf_i)
+                        .expect("To update the leaf node's value pointing index to the new value location; The leaf should be valid")
+                        .vs
+                        .get_mut(in_leaf_i)
+                        .expect("To update the leaf node's value pointing index to the new value location; The in-leaf position should be valid") = value_i;
+                }
+
+                #[cfg(feature = "unchecked")]
+                {
+                    unsafe {
+                        *self
+                            .leaf_vec
+                            .get_unchecked_mut(leaf_i)
+                            .vs
+                            .get_unchecked_mut(in_leaf_i) = value_i;
+                    }
+                }
+            }
             self.vs[value_i] = last_v_opt;
-            Some((len - 1, value_i))
+            Some(last_i)
         } else {
             None
         }
     }
+
+    /// Get the total number of nodes
+    ///
+    /// # Return
+    ///
+    /// The total number of tree nodes.
+    ///
+    /// # Example
+    /// ```
+    /// use zhifeng_impl_barnes_hut_tree as zbht;
+    ///
+    /// use zbht::BarnesHutTree as BHTree;
+    ///
+    /// let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity(&[0.0,0.0],2.0, 100);
+    ///
+    /// assert_eq!(bht.get_total_nodes_num(), 0);
+    ///
+    /// bht.push(&[-1.0,1.0]);
+    /// assert_eq!(bht.get_total_nodes_num(), 1);
+    ///
+    /// bht.push(&[1.0,1.0]);
+    /// assert_eq!(bht.get_total_nodes_num(), 3);
+    ///
+    /// bht.remove(0);
+    /// assert_eq!(bht.get_total_nodes_num(), 1);
+    ///
+    /// bht.remove(0);
+    /// assert_eq!(bht.get_total_nodes_num(), 0);
+    /// ```
     #[inline]
     pub fn get_total_nodes_num(&self) -> usize {
         self.internal_vec.len() + self.leaf_vec.len()

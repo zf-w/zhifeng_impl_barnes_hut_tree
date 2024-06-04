@@ -123,6 +123,9 @@ impl<const D: Udim> BarnesHutTreeSer<D> {
     }
 }
 
+/// # Zhifeng's BHT Serialization Implementation
+///
+/// To make the serialization process simpler, I design to let BHT first serialize into the intermediate form `BarnesHutTreeSer` for `serde_json`'s auto "derive" and testing. I guess the `BarnesHutTreeSer` also makes the serialized `JSON` form relatively smaller in size due to less "struct" with "Strings" to represent fields.
 impl<const D: Udim> BarnesHutTree<D> {
     pub fn calc_serialized(&self) -> BarnesHutTreeSer<D> {
         let nodes_num = self.get_total_nodes_num();

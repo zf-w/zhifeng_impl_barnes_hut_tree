@@ -1,4 +1,5 @@
 use crate::{
+    imple::get_mut_ref_from_arr_mut_ref,
     nodes::{
         Internal,
         NodeIndex::{self, In, Le},
@@ -18,32 +19,21 @@ impl<const D: Udim> BarnesHutTree<D> {
 
     #[inline]
     fn expand_root_internal(&mut self, mut root_i: usize, vc: &ColVec<D>) -> usize {
-        while !{
-            #[cfg(not(feature = "unchecked"))]
-            {
-                self.internal_vec
-                    .get_mut(root_i) // One bug here, should be new_i instead of root_i
-                    .unwrap()
-                    .as_mut()
-                    .bb
-                    .is_containing(vc)
-            }
-            #[cfg(feature = "unchecked")]
-            {
-                unsafe {
-                    self.internal_vec
-                        .get_unchecked_mut(root_i) // One bug here, should be new_i instead of root_i
-                        .as_mut()
-                        .bb
-                        .is_containing(vc)
-                }
-            }
-        } {
+        while !get_mut_ref_from_arr_mut_ref(
+            self.internal_vec.as_mut(),
+            root_i,
+            "To expand the root internal node",
+        )
+        .bb
+        .is_containing(vc)
+        {
             let next_i = self.internal_vec.len();
-            #[cfg(not(feature = "unchecked"))]
-            let root_mut_ref = self.internal_vec.get_mut(root_i).unwrap().as_mut();
-            #[cfg(feature = "unchecked")]
-            let root_mut_ref = unsafe { self.internal_vec.get_unchecked_mut(root_i).as_mut() };
+
+            let root_mut_ref = get_mut_ref_from_arr_mut_ref(
+                self.internal_vec.as_mut(),
+                root_i,
+                "Get root node internal mut ref.",
+            );
 
             let (mut new_root_box, dir) = root_mut_ref.calc_new_internal_with_new_vc(vc);
             new_root_box.nexts[dir] = Some(NodeIndex::In(root_i));
@@ -67,14 +57,12 @@ impl<const D: Udim> BarnesHutTree<D> {
                 Le(leaf_i) => {
                     // If the current node is a leaf node.
 
-                    #[cfg(not(feature = "unchecked"))]
-                    let leaf_mut_ref = self
-                        .leaf_vec
-                        .get_mut(leaf_i)
-                        .expect("Getting root leaf node to expand its bounding box")
-                        .as_mut();
-                    #[cfg(feature = "unchecked")]
-                    let leaf_mut_ref = unsafe { self.leaf_vec.get_unchecked_mut(leaf_i).as_mut() };
+                    // #[cfg(not(feature = "unchecked"))]
+                    let leaf_mut_ref = get_mut_ref_from_arr_mut_ref(
+                        self.leaf_vec.as_mut(),
+                        leaf_i,
+                        "Getting root leaf node to expand its bounding box",
+                    );
 
                     while !leaf_mut_ref.bb.is_containing(&vc)
                         && (leaf_mut_ref.get_values_num_inside() == 1
@@ -91,12 +79,11 @@ impl<const D: Udim> BarnesHutTree<D> {
 
                         let new_root_i = self.expand_root_internal(next_i, &vc);
 
-                        #[cfg(feature = "unchecked")]
-                        let new_root_mut_ref =
-                            unsafe { self.internal_vec.get_unchecked_mut(new_root_i).as_mut() };
-                        #[cfg(not(feature = "unchecked"))]
-                        let new_root_mut_ref =
-                            self.internal_vec.get_mut(new_root_i).unwrap().as_mut();
+                        let new_root_mut_ref = get_mut_ref_from_arr_mut_ref(
+                            self.internal_vec.as_mut(),
+                            new_root_i,
+                            "Get the new root mut ref to update struct bounding box",
+                        );
 
                         self.bb.clone_from(&new_root_mut_ref.bb);
 
@@ -111,16 +98,12 @@ impl<const D: Udim> BarnesHutTree<D> {
 
                     let new_root_i = self.expand_root_internal(internal_i, &vc);
 
-                    #[cfg(feature = "unchecked")]
-                    let new_root_mut_ref =
-                        unsafe { self.internal_vec.get_unchecked_mut(new_root_i).as_mut() };
-
-                    #[cfg(not(feature = "unchecked"))]
-                    let new_root_mut_ref = self
-                        .internal_vec
-                        .get_mut(new_root_i)
-                        .expect("Preparing for update root internal node's bounding box")
-                        .as_mut();
+                    // #[cfg(feature = "unchecked")]
+                    let new_root_mut_ref = get_mut_ref_from_arr_mut_ref(
+                        &mut self.internal_vec,
+                        new_root_i,
+                        "Preparing for update root internal node's bounding box",
+                    );
 
                     self.bb.clone_from(&new_root_mut_ref.bb);
                     self.root = Some(NodeIndex::In(new_root_i));

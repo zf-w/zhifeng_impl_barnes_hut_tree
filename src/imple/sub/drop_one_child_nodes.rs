@@ -1,4 +1,5 @@
 use crate::{
+    imple::get_mut_ref_from_arr_mut_ref,
     BarnesHutTree,
     NodeIndex::{In, Le},
     Udim,
@@ -7,28 +8,35 @@ use crate::{
 impl<const D: Udim> BarnesHutTree<D> {
     /// # Drop One-Child Internals
     ///
-    /// After we have cut the to-remove value from the leaf and the leaf from its parent internal node, the parent internal node might only holds one child, and we need to cut these nodes out until an internal node with more than one leaves.
+    /// After we have cut the to-remove value from the leaf and the leaf from its parent internal node, the parent internal node might only holds one child, and we need to cut these nodes off until an internal node with more than one leaves.
     ///
     /// ## Picking up the sibling
     ///
     /// After we have cut off the to-remove-value-holding leaf, we can pickup the single sibling and cut it off from the internal node.
+    ///
+    /// ## Tracing back
+    ///
+    /// We need to drop any 1-value-child internal nodes until a more-than-2-value-holding internal node or reaching root.
+    ///
+    /// ## Relink Sibling node
+    ///
+    /// We can then re-attach the sibling to that internal node or root.
     #[inline]
     pub(super) fn drop_one_child_internals(&mut self, start_internal_i: usize) -> Option<usize> {
-        let internal_mut_ref = self
-            .internal_vec
-            .get_mut(start_internal_i)
-            .unwrap()
-            .as_mut();
+        let internal_mut_ref = get_mut_ref_from_arr_mut_ref(
+            &mut self.internal_vec,
+            start_internal_i,
+            "To check from the start",
+        );
         let mut internal_i = start_internal_i;
         if internal_mut_ref.count > 2 {
-            // Even an internal node only has one leaf node, we shouldn't shrink this tree because it would have more leaves without the bounding box limit.
+            // Even an internal node has only one leaf node, if it contains more than two nodes, we shouldn't shrink this path because it would have more leaves without the bounding box limit.
             return Some(start_internal_i);
         }
         let mut sibling_opt: Option<usize> = None;
 
         for child_opt in internal_mut_ref.nexts.iter_mut() {
             if child_opt.is_some() {
-                // debug_assert!(child_count <= 1, "Should not have more than one child");
                 if sibling_opt.is_none() {
                     sibling_opt = Some(
                         match child_opt.take().expect("The sibling, just check is some") {
@@ -53,17 +61,18 @@ impl<const D: Udim> BarnesHutTree<D> {
             return None;
         };
         let mut prev_dir_opt: Option<usize> = None;
-        while let Some((curr_node_i, dir)) = unsafe {
-            self.internal_vec
-                .get_unchecked_mut(internal_i)
-                .as_ref()
-                .parent
-        } {
-            let curr_node_mut_ref = if cfg!(feature = "unchecked") {
-                unsafe { self.internal_vec.get_unchecked_mut(curr_node_i).as_mut() }
-            } else {
-                self.internal_vec.get_mut(curr_node_i).unwrap().as_mut()
-            };
+        while let Some((curr_node_i, dir)) = get_mut_ref_from_arr_mut_ref(
+            &mut self.internal_vec,
+            internal_i,
+            "Tracing back to cut 1-child internal nodes",
+        )
+        .parent
+        {
+            let curr_node_mut_ref = get_mut_ref_from_arr_mut_ref(
+                &mut self.internal_vec,
+                curr_node_i,
+                "Tracking to the parent",
+            );
 
             let curr_count = curr_node_mut_ref.count;
 
@@ -87,9 +96,17 @@ impl<const D: Udim> BarnesHutTree<D> {
         }
 
         if let Some(prev_dir) = prev_dir_opt {
-            let internal_mut_ref =
-                unsafe { self.internal_vec.get_unchecked_mut(internal_i).as_mut() };
-            let sibling_mut_ref = self.leaf_vec.get_mut(sibling_i).unwrap().as_mut();
+            let internal_mut_ref = get_mut_ref_from_arr_mut_ref(
+                &mut self.internal_vec,
+                internal_i,
+                "To relink the previous sibling",
+            );
+
+            let sibling_mut_ref = get_mut_ref_from_arr_mut_ref(
+                &mut self.leaf_vec,
+                sibling_i,
+                "Getting the sibling leaf",
+            );
             internal_mut_ref.link_leaf_to_dir(prev_dir, internal_i, sibling_i, sibling_mut_ref);
             Some(internal_i)
         } else {

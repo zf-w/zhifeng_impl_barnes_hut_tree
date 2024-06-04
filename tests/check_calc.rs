@@ -189,3 +189,86 @@ fn check_exact_force_simulation_on_1000_random_values() -> Result<(), Box<dyn st
     }
     Ok(())
 }
+
+/// This test is about the randomly removing values out from the `BHTree` during the simulation process.
+#[test]
+fn check_exact_force_simulation_and_all_remove_on_750_random_values(
+) -> Result<(), Box<dyn std::error::Error>> {
+    const D: usize = 2;
+    let len = 750;
+    let mut values = generate_random_values(len, &[-10.0..10.0, -10.0..10.0]);
+    let mut bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0, 0.0], 5.0, &values);
+
+    let mut idxs: Vec<usize> = Vec::with_capacity(len);
+    let mut bht_i_to_value_i: Vec<usize> = Vec::with_capacity(len);
+    let mut value_i_to_bht_i: Vec<usize> = Vec::with_capacity(len);
+
+    for i in 0..len {
+        idxs.push(i);
+        bht_i_to_value_i.push(i);
+        value_i_to_bht_i.push(i);
+    }
+    for i in 0..len {
+        let len_remain = len - i;
+        let rand_i = i + rand::random::<usize>() % len_remain;
+        let temp = idxs[i];
+        idxs[i] = idxs[rand_i];
+        idxs[rand_i] = temp;
+    }
+    let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
+
+    for idx_start in 0..len {
+        for idx_i in idx_start..len {
+            let value_i = idxs[idx_i];
+
+            let mut displacement = [0.0; D];
+            let mut expected_displacement = [0.0; D];
+            let in_bht_value_i = value_i_to_bht_i[value_i];
+            let res = bht.calc_force_on_value(
+                in_bht_value_i,
+                |_, _, _| -> bool { false },
+                &calc_fn,
+                &mut displacement,
+            );
+            assert!(res);
+            for idx_j in idx_start..len {
+                let value_j = idxs[idx_j];
+
+                if value_j == value_i {
+                    continue;
+                }
+                calc_fn(
+                    &values[value_i],
+                    &values[value_j],
+                    1,
+                    &mut expected_displacement,
+                );
+            }
+
+            assert_values_close(&displacement, &expected_displacement, 1e-9);
+
+            let mut new_value = values[value_i].clone();
+            for d in 0..D {
+                new_value[d] += displacement[d];
+            }
+
+            values[value_i].clone_from(&new_value);
+            bht.update(in_bht_value_i, &new_value);
+            assert_values_close(&values[value_i], bht.get(in_bht_value_i).unwrap(), 1e-9)
+        }
+        let value_i = idxs[idx_start];
+        let in_bht_value_i = value_i_to_bht_i[value_i];
+        let moved_i_opt = bht.remove(in_bht_value_i);
+        if let Some(moved_i) = moved_i_opt {
+            let moved_value_i = bht_i_to_value_i[moved_i];
+            value_i_to_bht_i[moved_value_i] = in_bht_value_i;
+            bht_i_to_value_i[in_bht_value_i] = moved_value_i;
+        }
+    }
+    assert_eq!(
+        bht.get_total_nodes_num(),
+        0,
+        "Should be having zero nodes in the end."
+    );
+    Ok(())
+}

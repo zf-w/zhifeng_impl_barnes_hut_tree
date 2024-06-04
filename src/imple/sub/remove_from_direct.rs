@@ -1,4 +1,4 @@
-use crate::{BarnesHutTree, Udim};
+use crate::{imple::get_mut_ref_from_arr_mut_ref, BarnesHutTree, Udim};
 
 impl<const D: Udim> BarnesHutTree<D> {
     /// # Removing the leaf value from the direct leaf node
@@ -25,12 +25,11 @@ impl<const D: Udim> BarnesHutTree<D> {
 
         self.vs[i].1 = None;
 
-        #[cfg(feature = "unchecked")]
-        let parent_leaf_mut_ref =
-            unsafe { self.leaf_vec.get_unchecked_mut(parent_leaf_i).as_mut() };
-
-        #[cfg(not(feature = "unchecked"))]
-        let parent_leaf_mut_ref = self.leaf_vec.get_mut(parent_leaf_i).unwrap().as_mut();
+        let parent_leaf_mut_ref = get_mut_ref_from_arr_mut_ref(
+            &mut self.leaf_vec,
+            parent_leaf_i,
+            "Get the direct parent leaf to cut the value out.",
+        );
 
         if parent_leaf_mut_ref.get_values_num_inside() > 1 {
             let replaced_leaf_i = parent_leaf_mut_ref.sub_value(idx, &self.vs[i].0);

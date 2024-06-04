@@ -5,6 +5,25 @@ use crate::{
     BarnesHutTree, Fnum, Udim,
 };
 
+#[inline]
+#[cfg(feature = "unchecked")]
+pub(crate) fn get_mut_ref_from_arr_mut_ref<'o, O, T: AsMut<O>>(
+    arr_mut_ref: &'o mut [T],
+    i: usize,
+    _: &'static str,
+) -> &'o mut O {
+    unsafe { arr_mut_ref.get_unchecked_mut(i).as_mut() }
+}
+#[inline]
+#[cfg(not(feature = "unchecked"))]
+pub(crate) fn get_mut_ref_from_arr_mut_ref<'o, O, T: AsMut<O>>(
+    arr_mut_ref: &'o mut [T],
+    i: usize,
+    expect_str: &'static str,
+) -> &'o mut O {
+    arr_mut_ref.get_mut(i).expect(expect_str).as_mut()
+}
+
 mod add;
 
 mod sub;
@@ -148,6 +167,7 @@ impl<const D: Udim> BarnesHutTree<D> {
             .expect("Getting leaf for updating struct bounding box")
             .as_mut();
 
+        leaf_mut_ref.parent = None;
         leaf_mut_ref.bb.clone_from(&self.bb);
         self.root = Some(NodeIndex::Le(leaf_i));
     }
