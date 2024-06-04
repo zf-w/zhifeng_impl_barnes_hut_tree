@@ -1,4 +1,5 @@
 use crate::{
+    imple::{get_mut_ref_from_arr_mut_ref, get_ref_from_arr_ref},
     nodes::{
         Internal, Leaf,
         NodeIndex::{self, In, Le},
@@ -14,20 +15,35 @@ impl<const D: Udim> BarnesHutTree<D> {
     /// If the final position is a leaf node, we need to insert an internal node in the middle and reinsert the two leaf nodes.
     ///
     #[inline]
-    pub(super) fn find_leaf_to_add_value(&mut self, leaf_i: usize) -> usize {
+    pub(super) fn find_leaf_to_add_value(&mut self, value_i: usize) -> usize {
         let mut prev_internal: Option<(usize, usize)> = None;
 
         while let Some(curr) = if let Some((prev_i, prev_dir)) = prev_internal {
-            self.internal_vec.get_mut(prev_i).unwrap().nexts[prev_dir].take()
+            get_mut_ref_from_arr_mut_ref(
+                &mut self.internal_vec,
+                prev_i,
+                "Looking for a empty position to add the new value",
+            )
+            .nexts[prev_dir]
+                .take()
         } else {
             self.root.take()
         } {
             let target_internal_i = match curr {
                 Le(curr_leaf_i) => {
-                    let curr_leaf_mut_ref = self.leaf_vec[curr_leaf_i].as_mut();
+                    let curr_leaf_mut_ref = get_mut_ref_from_arr_mut_ref(
+                        &mut self.leaf_vec,
+                        curr_leaf_i,
+                        "Getting the leaf mut ref",
+                    );
                     if curr_leaf_mut_ref.bb.br <= self.br_limit {
                         *if let Some((prev_i, prev_dir)) = prev_internal {
-                            &mut self.internal_vec.get_mut(prev_i).unwrap().nexts[prev_dir]
+                            &mut get_mut_ref_from_arr_mut_ref(
+                                &mut self.internal_vec,
+                                prev_i,
+                                "Relinking the taken leaf back",
+                            )
+                            .nexts[prev_dir]
                         } else {
                             &mut self.root
                         } = Some(NodeIndex::Le(curr_leaf_i));
@@ -47,18 +63,20 @@ impl<const D: Udim> BarnesHutTree<D> {
                 In(internal_i) => internal_i,
             };
 
-            let target_internal = self
-                .internal_vec
-                .get_mut(target_internal_i)
-                .expect("Dereferencing for add values along path")
-                .as_mut();
-            let leaf_vc = &self.vs[leaf_i].0;
-            target_internal.add_value(leaf_vc);
+            let target_internal = get_mut_ref_from_arr_mut_ref(
+                &mut self.internal_vec,
+                target_internal_i,
+                "Getting the current internal to check its next position",
+            );
 
-            let next_dir = target_internal.calc_next_dir(leaf_vc);
+            let value_ref = &get_ref_from_arr_ref(&self.vs, value_i, "Getting the to-add value").0;
+
+            target_internal.add_value(value_ref);
+
+            let next_dir = target_internal.calc_next_dir(value_ref);
 
             *if let Some((prev_i, prev_dir)) = prev_internal {
-                &mut self.internal_vec.get_mut(prev_i).unwrap().nexts[prev_dir]
+                &mut get_mut_ref_from_arr_mut_ref(&mut self.internal_vec, prev_i, "Attaching the node back to the parent since we have \"take\" its index pointer").nexts[prev_dir]
             } else {
                 &mut self.root
             } = Some(NodeIndex::In(target_internal_i));
@@ -85,14 +103,12 @@ impl<const D: Udim> BarnesHutTree<D> {
             );
 
             self.new_leaf(leaf_box);
-            // self.nodes_num += 1;
 
             ans_leaf_i
         } else {
             let ans_leaf_i = self.new_leaf(Leaf::new_empty_from_bb(self.bb.clone()));
 
             self.root = Some(NodeIndex::Le(ans_leaf_i));
-            // self.nodes_num += 1;
 
             ans_leaf_i
         }

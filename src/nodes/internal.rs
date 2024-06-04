@@ -6,7 +6,7 @@ pub struct Internal<const D: Udim> {
     pub(crate) parent: Option<(usize, usize)>,
     pub(crate) nexts: Vec<Option<NodeIndex>>,
 
-    pub(crate) count: usize,
+    count: usize,
     pub(crate) vc: ColVec<D>,
     pub(crate) bb: BoundBox<D>,
 }
@@ -115,20 +115,6 @@ impl<const D: Udim> Internal<D> {
 
     #[inline]
     pub fn drop_child(&mut self, dir: usize) -> Option<NodeIndex> {
-        // if let Some(child_box) = self.nexts[dir].take() {
-        //     match child_box {
-        //         NodeBox::In(internal_box) => {
-        //             self.count -= internal_box.count;
-        //             self.leaf_count -= internal_box.leaf_count;
-        //         }
-        //         NodeBox::Le(leaf_box) => {
-        //             let values_num = leaf_box.get_values_num_inside();
-        //             debug_assert!(values_num == 1);
-        //             self.count -= values_num;
-        //             self.leaf_count -= 1;
-        //         }
-        //     }
-        // }
         self.nexts[dir].take()
     }
 }

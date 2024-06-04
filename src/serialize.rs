@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::{
+    imple::get_ref_from_arr_ref,
     nodes::{Leaf, NodeIndex},
     BarnesHutTree, ColVec, Fnum, Udim,
 };
@@ -27,7 +28,7 @@ pub struct BarnesHutTreeSer<const D: Udim> {
 impl<const D: Udim> BarnesHutTreeSer<D> {
     pub(crate) fn with_num_of_nodes(
         num: usize,
-        vs: &Vec<(ColVec<D>, Option<(usize, usize)>)>,
+        vs: &Vec<Box<(ColVec<D>, Option<(usize, usize)>)>>,
     ) -> BarnesHutTreeSer<D> {
         let vcs: Vec<Fnum> = Vec::with_capacity(num * D);
         let bcs: Vec<Fnum> = Vec::with_capacity(num * D);
@@ -170,7 +171,8 @@ impl<const D: Udim> BarnesHutTree<D> {
 
         while !dq.is_empty() {
             let (curr_i, parent_info) = dq.pop_front().expect("Just checked unempty");
-            let curr_ref = self.internal_vec.get(curr_i).unwrap().as_ref();
+            let curr_ref =
+                get_ref_from_arr_ref(&self.internal_vec, curr_i, "Getting the current node"); //self.internal_vec.get(curr_i).unwrap().as_ref();
             let (parent_opt, from_dir) = if let Some((parent_i, from_dir)) = parent_info {
                 (Some(parent_i), Some(from_dir))
             } else {
@@ -182,7 +184,7 @@ impl<const D: Udim> BarnesHutTree<D> {
                 &curr_ref.vc.data,
                 &curr_ref.bb.bc.data,
                 curr_ref.bb.br.clone(),
-                curr_ref.count,
+                curr_ref.get_values_num_inside(),
             );
             for (from_dir, next) in curr_ref.nexts.iter().enumerate() {
                 match next {

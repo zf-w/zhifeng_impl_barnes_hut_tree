@@ -1,6 +1,4 @@
-//! # Barnes-Hut Tree for accelerated N-body force calculation
-//!
-//!
+#![doc = include_str!("../ReadMe.md")]
 
 const DEFAULT_BR_LIMIT: Fnum = 1e-8;
 
@@ -24,7 +22,7 @@ use nodes::{Internal, Leaf, NodeIndex};
 ///
 /// This is Zhifeng's implementation of Barnes-Hut Tree for accelerated N-body force calculation.
 pub struct BarnesHutTree<const D: Udim> {
-    vs: Vec<(ColVec<D>, Option<(usize, usize)>)>,
+    vs: Vec<Box<(ColVec<D>, Option<(usize, usize)>)>>,
 
     leaf_vec: Vec<Box<Leaf<D>>>,
     internal_vec: Vec<Box<Internal<D>>>,
@@ -206,12 +204,14 @@ impl<const D: Udim> BarnesHutTree<D> {
         temp_self
     }
 
-    /// Calculate force or other custom functions on a specific value (body).
+    /// Calculate force or other custom relationships on a specific value (body).
     ///
     /// The function takes:
-    /// - a index of a target value
+    /// - an index of the target value
     /// - a closure to determine whether a super node is "far" enough to be considered as a whole,
+    ///     The closure takes the current target value, the position of the body, and the bounding box center and radius to determine whether the super node is "far" enough.
     /// - a closure to calculate force or other relations between the target value and another super node (or value if the size is one),
+    ///     The closure takes the target value, the mean position of a group of values, the size of the group, and the answer's mutable reference.
     /// - a custom struct to store and accumulate the results from the previous calculator function.
     ///
     /// ## Example:
@@ -334,7 +334,8 @@ impl<const D: Udim> BarnesHutTree<D> {
     /// ```
     pub fn push(&mut self, value_ref: &[Fnum; D]) -> usize {
         let value_i = self.vs.len();
-        self.vs.push((ColVec::new_with_arr(value_ref), None));
+        self.vs
+            .push(Box::new((ColVec::new_with_arr(value_ref), None)));
 
         self.add(value_i);
         value_i

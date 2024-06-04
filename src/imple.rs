@@ -24,6 +24,25 @@ pub(crate) fn get_mut_ref_from_arr_mut_ref<'o, O, T: AsMut<O>>(
     arr_mut_ref.get_mut(i).expect(expect_str).as_mut()
 }
 
+#[inline]
+#[cfg(feature = "unchecked")]
+pub(crate) fn get_ref_from_arr_ref<'o, O, T: AsRef<O>>(
+    arr_ref: &'o [T],
+    i: usize,
+    _: &'static str,
+) -> &'o O {
+    unsafe { arr_ref.get_unchecked(i).as_ref() }
+}
+#[inline]
+#[cfg(not(feature = "unchecked"))]
+pub(crate) fn get_ref_from_arr_ref<'o, O, T: AsRef<O>>(
+    arr_ref: &'o [T],
+    i: usize,
+    expect_str: &'static str,
+) -> &'o O {
+    arr_ref.get(i).expect(expect_str).as_ref()
+}
+
 mod add;
 
 mod sub;
@@ -39,11 +58,11 @@ impl<const D: Udim> BarnesHutTree<D> {
         br_limit: Fnum,
     ) -> Self {
         let len = vals.len();
-        let mut vs: Vec<(ColVec<D>, Option<(usize, usize)>)> = Vec::with_capacity(len);
+        let mut vs: Vec<Box<(ColVec<D>, Option<(usize, usize)>)>> = Vec::with_capacity(len);
         let leaf_vec = Vec::with_capacity(len);
         let internal_vec = Vec::with_capacity(len);
         for val in vals {
-            vs.push((ColVec::new_with_arr(val), None));
+            vs.push(Box::new((ColVec::new_with_arr(val), None)));
         }
         Self {
             vs,

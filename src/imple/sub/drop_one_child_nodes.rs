@@ -29,7 +29,7 @@ impl<const D: Udim> BarnesHutTree<D> {
             "To check from the start",
         );
         let mut internal_i = start_internal_i;
-        if internal_mut_ref.count > 2 {
+        if internal_mut_ref.get_values_num_inside() > 2 {
             // Even an internal node has only one leaf node, if it contains more than two nodes, we shouldn't shrink this path because it would have more leaves without the bounding box limit.
             return Some(start_internal_i);
         }
@@ -74,7 +74,7 @@ impl<const D: Udim> BarnesHutTree<D> {
                 "Tracking to the parent",
             );
 
-            let curr_count = curr_node_mut_ref.count;
+            let curr_count = curr_node_mut_ref.get_values_num_inside();
 
             curr_node_mut_ref.nexts[dir] = None;
 

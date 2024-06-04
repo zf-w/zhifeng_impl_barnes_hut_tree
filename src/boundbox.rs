@@ -35,7 +35,7 @@ impl<const D: Udim> BoundBox<D> {
 
     #[inline]
     pub fn calc_child_bb(&self, i: &usize) -> Self {
-        let mut ans_bc: ColVec<D> = ColVec::clone(&self.bc);
+        let mut ans_bc = self.bc.clone();
         let ans_br = self.br * 0.5;
 
         let mask: usize = 1 << (Self::DIM - 1);
@@ -98,7 +98,7 @@ impl<const D: Udim> BoundBox<D> {
 
     #[inline]
     pub fn set_self_from_parent_bb_and_dir(&mut self, parent_bb: &Self, dir: usize) {
-        self.bc = parent_bb.bc.clone();
+        self.bc.clone_from(&parent_bb.bc);
         let ans_r = parent_bb.br * 0.5;
 
         let mask: usize = 1 << (Self::DIM - 1);
