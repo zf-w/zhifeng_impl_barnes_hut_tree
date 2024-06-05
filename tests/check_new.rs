@@ -315,3 +315,41 @@ fn check_pushing_new_with_internal_insertion_and_some_adding_to_same_leaf(
     assert_bht_serde_eq(&calc_bht_ser, &expected_bht_ser);
     Ok(())
 }
+
+#[test]
+#[should_panic]
+fn check_panic_when_bc_has_inf() {
+    BHTree::with_bounding_and_capacity_and_limit(&[0.0, f64::INFINITY], 2.0, 3, 2.0);
+}
+
+#[test]
+#[should_panic]
+fn check_panic_when_br_is_nan() {
+    BHTree::with_bounding_and_capacity_and_limit(&[0.0, 0.0], f64::NAN, 3, 2.0);
+}
+
+#[test]
+#[should_panic]
+fn check_panic_when_a_value_is_nan() {
+    let vals: Vec<[f64; 2]> = vec![[1.0, f64::NAN], [-1.0, -1.0], [9.0, 9.0]];
+
+    let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity_and_limit(&[0.0, 0.0], 2.0, 3, 2.0);
+
+    for value in vals {
+        bht.push(&value);
+    }
+}
+
+#[test]
+#[should_panic]
+fn check_panic_when_updated_value_is_nan() {
+    let vals: Vec<[f64; 2]> = vec![[1.0, 1.0], [-1.0, -1.0], [9.0, 9.0]];
+
+    let mut bht: BHTree<2> = BHTree::with_bounding_and_capacity_and_limit(&[0.0, 0.0], 2.0, 3, 2.0);
+
+    for value in vals {
+        bht.push(&value);
+    }
+
+    bht.update(2, &[0.0, f64::NAN]);
+}

@@ -1,6 +1,8 @@
 //! # A module of helper calculation function factories
 //!
-//! This module provides some implementations of repulsive displacement and energy calculation functions.
+//! This module provides some implementations of repulsive displacement and energy calculation function factories.
+//!
+//! The output closures, from the factory functions, are from Hu, Y. (2005). Efficient, high-quality force-directed graph drawing. _Mathematica journal, 10_(1), 37-71, mentioned in the main page of the crate. These functions are designed for calculating the repulsive forces and, via force simulation, finding nice graph node positions.
 
 use crate::{Fnum, Udim};
 
@@ -25,9 +27,12 @@ fn calc_sum_of_squared<const D: Udim>(v: &[Fnum; D]) -> Fnum {
 /// # Factory of Repulsive Displacement Calculation Function
 ///
 /// The function returns a closure defined by parameter `k` and `c`.
-/// The returned function takes the position of the target value, the mean position of a group of values, the size of the group, and the answer's mutable reference.
 ///
-/// $f_r(i, S) = - |S|CK^2/dis(x_i - x_S)$
+/// The returned closure takes the position of the target value, the mean position of a group of values, the size of the group, and the to-calculate answer's mutable reference.
+///
+/// The returned closure updates the third argument representing the answer displacement when calling it with the position of the target value, the average position of the values, and the number of values of a "far" super node.
+///
+/// The repulsive force between the target value and the super node is the number of values contained in the super node times `c` and the square of `k` divided by the distance between the value and the average center of the values in the super node. The repulsive displacement in one update is, therefore, the force times the direction of the super node to the target value, which is the vector of target value minus super node value center times the number of values contained in the super node times `c` and square of `k` divided by the distance squared.
 pub fn factory_of_repulsive_displacement_calc_fn<const D: Udim>(
     k: Fnum,
     c: Fnum,
@@ -54,7 +59,7 @@ pub fn factory_of_repulsive_displacement_calc_fn<const D: Udim>(
 ///
 /// The function returns a closure defined by parameter `k` and `c`.
 ///
-/// $f_r(i, S) = - |S|CK^2/dis(x_i - x_S)$
+/// In addition to the previous function [factory_of_repulsive_displacement_calc_fn], this returned closure also updates the "energy", the sum of squared forces on the target value.
 pub fn factory_of_repulsive_displacement_with_energy_calc_fn<const D: Udim>(
     k: Fnum,
     c: Fnum,
@@ -81,7 +86,7 @@ pub fn factory_of_repulsive_displacement_with_energy_calc_fn<const D: Udim>(
 
 /// # Factory of Is Super Node Function
 ///
-/// The function returns a closure defined by parameter `theta`.
+/// The function returns a closure defined by parameter `theta`. The closure will return `true` if the width of a super cube divided by the distance between the current value and the average position of values in the super node is less than `theta.`
 ///
 pub fn factory_of_is_super_node_fn<const D: Udim>(
     theta: Fnum,

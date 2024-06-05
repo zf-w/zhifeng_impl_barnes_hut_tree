@@ -73,8 +73,8 @@ impl<const D: Udim> BarnesHutTree<D> {
 
     ///
     ///  Construct a new Barnes Hut Tree with specified:
-    /// - the initial bounding center and radius (half width),
-    /// - the estimation of number of values ("bodies") it's going to contain,
+    /// - the initial bounding center and radius (half-width),
+    /// - the estimation of number of values ("bodies") the tree is going to contain,
     ///
     /// ## Example:
     ///
@@ -99,9 +99,9 @@ impl<const D: Udim> BarnesHutTree<D> {
     }
 
     /// Construct a new Barnes Hut Tree with specified:
-    /// - the initial bounding center and radius (half width),
-    /// - the estimation of number of values ("bodies") it's going to contain,
-    /// - the minimum "radius" (half width) of the hyper cube.
+    /// - the initial bounding center and radius (half-width),
+    /// - the estimation of number of values ("bodies") the tree is going to contain,
+    /// - the minimum "radius" (half-width) of the hypercube.
     ///
     /// ## Example:
     ///
@@ -128,6 +128,10 @@ impl<const D: Udim> BarnesHutTree<D> {
         len: usize,
         br_limit: Fnum,
     ) -> Self {
+        assert!(
+            br_limit.is_finite() && br_limit > 0.0,
+            "The limit should be finite and greater than zero."
+        );
         Self {
             vs: Vec::with_capacity(len),
             leaf_vec: Vec::with_capacity(len),
@@ -138,7 +142,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         }
     }
     /// Construct a new Barnes Hut Tree with specified:
-    /// - the initial bounding center and radius (half width),
+    /// - the initial bounding center and radius (half-width),
     /// - the to-insert values (bodies).
     ///
     /// ## Example:
@@ -152,9 +156,13 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// let mut ans_displacement = [0.0; 2];
     ///
-    /// bht.calc_force_on_value(0, |_,_,_| -> bool {false}, zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2), &mut ans_displacement);
+    /// bht.calc_force_on_value(0,
+    ///     |_,_,_| -> bool {false},
+    ///     zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2),
+    ///     &mut ans_displacement);
     ///
-    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],
+    ///     "The calculated displacement should be the same.");
     /// ```
     pub fn with_bounding_and_values(
         root_bc: &[Fnum; D],
@@ -169,9 +177,9 @@ impl<const D: Udim> BarnesHutTree<D> {
     }
 
     /// Construct a new Barnes Hut Tree with specified:
-    /// - the initial bounding center and radius (half width),
+    /// - the initial bounding center and radius (half-width),
     /// - the to-insert values (bodies),
-    /// - the minimum "radius" (half width) of the hyper cube.
+    /// - the minimum "radius" (half-width) of the hypercube.
     ///
     /// ## Example:
     ///
@@ -180,15 +188,22 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// use zbht::BarnesHutTree as BHTree;
     ///
-    /// let bht: BHTree<2> = BHTree::with_bounding_and_values_and_limit(&[0.0,0.0],2.0, &[[-1.0,1.0],[1.0,1.0]], 100.0);
+    /// // Setting the minimum allowed "radius" of the hypercube to be 100.0.
+    /// let bht: BHTree<2> =
+    ///     BHTree::with_bounding_and_values_and_limit(&[0.0,0.0],2.0, &[[-1.0,1.0],[1.0,1.0]], 100.0);
     ///
     ///
     /// let mut ans_displacement = [0.0; 2];
     ///
-    /// bht.calc_force_on_value(0, |_,_,_| -> bool {false}, zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2), &mut ans_displacement);
+    /// bht.calc_force_on_value(0,
+    ///     |_,_,_| -> bool {false},
+    ///     zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2),
+    ///     &mut ans_displacement);
     ///
-    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],"The calculated displacement should be the same.");
-    /// assert_eq!(bht.get_total_nodes_num(), 1, "The total number of nodes inside the tree.")
+    /// assert_eq!(ans_displacement, [(-2.0 * 0.2) / (2.0 * 2.0), 0.0],
+    ///     "The calculated displacement should be the same.");
+    /// assert_eq!(bht.get_total_nodes_num(), 1,
+    ///     "The total number of nodes inside the tree should be one since the limit is 100.0.")
     /// ```
     pub fn with_bounding_and_values_and_limit(
         root_bc: &[Fnum; D],

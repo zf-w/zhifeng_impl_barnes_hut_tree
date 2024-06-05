@@ -64,6 +64,10 @@ impl<const D: Udim> BarnesHutTree<D> {
         for val in vals {
             vs.push(Box::new((ColVec::new_with_arr(val), None)));
         }
+        assert!(
+            br_limit.is_finite() && br_limit > 0.0,
+            "The limit should be finite and greater than zero."
+        );
         Self {
             vs,
             leaf_vec,
