@@ -22,7 +22,7 @@ fn generate_random_values<const D: Udim>(len: usize, ranges: &[Range<Fnum>; D]) 
     ans_vec
 }
 
-pub fn check_vanillia_force_simulation_on_random_values(
+pub fn _check_vanillia_force_simulation_on_random_values(
     len: usize,
 ) -> Result<(), Box<dyn std::error::Error>> {
     const D: usize = 2;
