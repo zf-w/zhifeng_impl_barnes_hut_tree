@@ -12,7 +12,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     g.bench_function("Barnes-Hut-Tree", |b| {
         b.iter(|| check_tree_force_simulation_on_random_values(len))
     });
-    // g.bench_function("Vanillia", |b| {
+    // g.bench_function("Vanillia Double Nested Loops", |b| {
     //     b.iter(|| check_vanillia_force_simulation_on_random_values(len))
     // });
     drop(g);
@@ -22,7 +22,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     g.bench_function("Barnes-Hut-Tree", |b| {
         b.iter(|| check_tree_force_simulation_on_random_values(len))
     });
-    // g.bench_function("Vanillia", |b| {
+    // g.bench_function("Vanillia Double Nested Loops", |b| {
     //     b.iter(|| check_vanillia_force_simulation_on_random_values(len))
     // });
 }

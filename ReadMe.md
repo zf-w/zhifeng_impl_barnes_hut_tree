@@ -95,14 +95,14 @@ This feature uses `get_unchecked`, `get_unchecked_mut`, etc, for quicker access 
 
 The crate uses `criterion` for benchmarking and `rand` for generating random testing values. To simulate the common use cases of [BarnesHutTree], I used one round of looping through all the values, calculating their corresponding displacement and updating their positions as the benchmarking standard.
 
-| Algorithm                             | Number of Values (bodies) | Time      |
-| ------------------------------------- | ------------------------- | --------- |
-| Double Nested Loop                    | 1000                      | 1.61 ms   |
-| [BarnesHutTree]                       | 1000                      | 1.11 ms   |
-| [BarnesHutTree] (feature = unchecked) | 1000                      | 1.04 ms   |
-| Double Nested Loop                    | 10000                     | 160.44 ms |
-| [BarnesHutTree]                       | 10000                     | 17.754 ms |
-| [BarnesHutTree] (feature = unchecked) | 10000                     | 16.23 ms  |
+| Algorithm                               | Number of Values (bodies) | Time      |
+| --------------------------------------- | ------------------------- | --------- |
+| Double Nested Loop                      | 1000                      | 2.44 ms   |
+| [BarnesHutTree]                         | 1000                      | 1.56 ms   |
+| [BarnesHutTree] (feature = "unchecked") | 1000                      | 1.46 ms   |
+| Double Nested Loop                      | 10000                     | 242.88 ms |
+| [BarnesHutTree]                         | 10000                     | 25.09 ms  |
+| [BarnesHutTree] (feature = "unchecked") | 10000                     | 22.98 ms  |
 
 ## Overall Panics
 
