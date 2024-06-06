@@ -1,8 +1,10 @@
 # Barnes-Hut Tree for Quick N-body Force Calculation
 
-Thank you for checking out the crate. This is Zhifeng's coding practice of implementing Barnes-Hut Tree for accelerated N-body force calculation.
+Thank you for checking out the crate. This is Zhifeng's coding practice of implementing the Barnes-Hut Tree for accelerated N-body force calculation.
 
-The crate consists of two parts: the [BarnesHutTree] struct and the [utils] module containing a few helper functions. The [BarnesHutTree] is a data structure that accelerates the N-body force calculation by approximating and treating groups of "bodies" relatively "far" away as a super node. To make the force calculation more customizable, the [BarnesHutTree] takes in a closure (Anonymous Function) determining whether a current node can be seen as "far enough" and a closure determining how to calculate the force or any other relationship between the target node and the super node. The [utils] module contains several closure factory functions of the repulsive force calculation mentioned in a ([paper](#reference)) about graph drawing.
+The crate consists of two parts: the [BarnesHutTree] struct and the [utils] module containing a few helper functions. The [BarnesHutTree] is a data structure that accelerates the N-body force calculation by approximating and treating groups of "bodies" relatively "far" away as super nodes, not needing to loop through each individual body.
+
+To make the force calculation more customizable, the [BarnesHutTree] takes in a closure (Anonymous Function) determining whether a current node can be seen as "far enough" and a closure determining how to calculate the force or any other relationship between the target node and the super node. The [utils] module contains several closure factory functions of the repulsive force calculation mentioned in a ([paper](#reference)) about graph drawing.
 
 ## Usage Example
 
@@ -34,17 +36,31 @@ bht.calc_force_on_value(0, &is_super, &calc_fn, &mut ans_displacement);
 
 To make the arguments in constructors clearer, below are the key terms I used in the implementation.
 
-- The position of each "body" in the context of "n-body" calculation is called `value`. (Currently, the tree treats each body as equal.)
+- The "body" in the context of "n-body" calculation is called `value`. (Currently, the tree treats each body as equal.)
 
 - The Barnes Hut Tree uses a tree of hyper cubes to quickly find groups of nodes relatively close with each other and calculate the average position of the group of `value`s before hand to accelerate the calculation process.
 
-- The average of `value`s in a node is called value center, `vc` in code.
+- The average of a node's contained `value`s' position is called value center, `vc` for short.
 
-- The bounding box center, which is the center of a hyper cube, of nodes is called `bc` for short.
+- The tree nodes' bounding box center, which is the center of a hypercube, is called `bc` for short.
 
-- The bounding box radius, which is the half width of a hyper cube, of nodes is called `br` for short.
+- The tree nodes' bounding box radius, which is the half-width of a hypercube, is called `br` for short.
 
-To make the design safer, I internally use `vec` to store nodes: internal nodes and leaf nodes. When a node needs to be removed, if it is not the last node, the last node in `vec` will replace its place and update the index-based virtual "pointers".
+To make the design safer, I internally use `vec` to store nodes: internal and leaf nodes. When a node needs to be removed, if it is not the last node, the last node in `vec` will replace its place and update the index-based virtual "pointers".
+
+### General Idea
+
+At first, the [BarnesHutTree] starts with a default or specified bounding hypercube. For each dimension, the hypercube's center divides the dimension into two, thus dividing the hyperspace into two to the power of number of dimensions. For example, for two-demensional cases, a node can divides all the values into four groups. The [BarnesHutTree] will try to recursively divide all the values until all the values are been separated such that finally not two values sit in the same node. With this structure and some criteria about the relative position between a target node and the value center position of the super node, we can efficiently find out super nodes and calculate forces.
+
+But, there are many potential problems: how the crate handles values sitting on the boundaries, defining dimensions, two too close or identical values creating infinite amound of nodes, and what if a value is out of the initial bounding hypercube.
+
+### Current Approach of Handling Boundary Values
+
+A hypercube's lower bound is inclusive, and its upper bound is exclusive. So, for example, for two dimensional space, the value sitting on the center of a hypercube belongs to the node's first quadrant child node.
+
+### Current Approach of Handling Dimensions
+
+Currently, the tree uses template parameters to define the dimension of the value (body)'s position. Internally, one internal node uses a `vec` to store information on its child nodes. This approach makes accessing the child nodes quick, but the space needed is two to the power of the number of dimensions. We need to be careful when using a large number of dimensions.
 
 ### Current Approach of Handling Too Close or Identical Values
 
@@ -58,9 +74,32 @@ We need to be extra careful when setting this limit value. If the limit is too b
 
 Currently, the tree will try to double its width by creating a new internal node with a larger radius in the direction of the to-include value (similarly for none or only one leaf node above the minimum radius limit). We need to be careful when the to-include value is too far away, creating numeric issues like `INFINITY` or `NaN`.
 
+## Features
+
+### Serialize
+
+This feature is mainly for testing and debugging. This feature uses `serde` and `serde_json` to help serialize the tree.
+
+### Unchecked
+
+This feature uses `get_unchecked`, `get_unchecked_mut`, etc, for quicker access of "virtual" "inside-vec" nodes. Based on the `cargo bench` results on with `--features unchecked`, the "unchecked" feature is about 6% quicker than the default one.
+
+## Performance
+
+The crate uses `criterion` for benchmarking and `rand` for generating random testing values. To simulate the common use cases of [BarnesHutTree], I used one round of looping through all the values, calculating their corresponding displacement and updating their positions as the benchmarking standard.
+
+| Algorithm                             | Number of Values (bodies) | Time      |
+| ------------------------------------- | ------------------------- | --------- |
+| Double Nested Loop                    | 1000                      | 1.61 ms   |
+| [BarnesHutTree]                       | 1000                      | 1.11 ms   |
+| [BarnesHutTree] (feature = unchecked) | 1000                      | 1.04 ms   |
+| Double Nested Loop                    | 10000                     | 160.44 ms |
+| [BarnesHutTree]                       | 10000                     | 17.754 ms |
+| [BarnesHutTree] (feature = unchecked) | 10000                     | 16.23 ms  |
+
 ## Overall Panics
 
-The current tree will panic if any 64-bit float turned to be not finite during construction and value updates.
+The current tree will panic if any 64-bit float becomes "NaN" or "Infinity" during construction and value updates.
 
 ## Reference
 

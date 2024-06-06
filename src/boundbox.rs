@@ -114,10 +114,40 @@ impl<const D: Udim> BoundBox<D> {
 mod test {
     use super::*;
     #[test]
-    fn check_calc_next_dir() {
+    fn check_calc_next_dir_dim_2() {
+        let bc_arr = [0.0, 0.0];
+        let bb = BoundBox::new_with_arr(&bc_arr, 2.0);
+        assert_eq!(3, bb.calc_next_dir(&ColVec::new_with_arr(&[1.0, 1.0])));
+        assert_eq!(2, bb.calc_next_dir(&ColVec::new_with_arr(&[1.0, -1.0])));
+        assert_eq!(1, bb.calc_next_dir(&ColVec::new_with_arr(&[-1.0, 1.0])));
+        assert_eq!(0, bb.calc_next_dir(&ColVec::new_with_arr(&[-1.0, -1.0])));
+
+        assert_eq!(3, bb.calc_next_dir(&ColVec::new_with_arr(&[0.0, 0.0])));
+        assert_eq!(3, bb.calc_next_dir(&ColVec::new_with_arr(&[0.0, 1.0])));
+        assert_eq!(3, bb.calc_next_dir(&ColVec::new_with_arr(&[1.0, 0.0])));
+
+        assert_eq!(1, bb.calc_next_dir(&ColVec::new_with_arr(&[-1.0, 0.0])));
+        assert_eq!(2, bb.calc_next_dir(&ColVec::new_with_arr(&[0.0, -1.0])));
+    }
+    #[test]
+    fn check_calc_next_dir_dim_2_boundary() {
+        let bc_arr = [0.0, 0.0];
+        let bb = BoundBox::new_with_arr(&bc_arr, 2.0);
+
+        assert_eq!(3, bb.calc_next_dir(&ColVec::new_with_arr(&[0.0, 0.0])));
+        assert_eq!(3, bb.calc_next_dir(&ColVec::new_with_arr(&[0.0, 1.0])));
+        assert_eq!(3, bb.calc_next_dir(&ColVec::new_with_arr(&[1.0, 0.0])));
+
+        assert_eq!(1, bb.calc_next_dir(&ColVec::new_with_arr(&[-1.0, 0.0])));
+        assert_eq!(2, bb.calc_next_dir(&ColVec::new_with_arr(&[0.0, -1.0])));
+    }
+    #[test]
+    fn check_calc_next_dir_dim_3() {
         let bc_arr = [0.0, 0.0, 0.0];
         let bb = BoundBox::new_with_arr(&bc_arr, 2.0);
         let vc_7 = ColVec::new_with_arr(&[1.0, 1.0, 1.0]);
+        assert_eq!(7, bb.calc_next_dir(&vc_7));
+        let vc_7 = ColVec::new_with_arr(&[0.0, 0.0, 0.0]);
         assert_eq!(7, bb.calc_next_dir(&vc_7));
         let vc_3 = ColVec::new_with_arr(&[-1.0, 1.0, 1.0]);
         assert_eq!(3, bb.calc_next_dir(&vc_3));

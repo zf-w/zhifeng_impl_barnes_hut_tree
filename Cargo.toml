@@ -2,8 +2,17 @@
 name = "zhifeng_impl_barnes_hut_tree"
 version = "0.0.20240603"
 edition = "2021"
+include = [
+    "benches/**",
+    "src/**",
+    "tests/**",
+    "**/ReadMe.md",
+    "License.txt"
+]
+authors = ["Zhifeng Wang"]
 categories = ["data-structures"]
-description = ""
+description = "This crate implements Barns-Hut Tree for accelerated N-body force calculation."
+keywords = ["Barnes-Hut Tree"]
 license = "AGPL-3.0-only"
 readme = "ReadMe.md"
 
@@ -31,9 +40,4 @@ required-features = ["serialize", "unchecked"]
 
 [[bench]]
 name = "cmp_n_body_force_sim"
-harness = false
-
-[[bench]]
-name = "cmp_n_body_force_sim_unchecked"
-required-features = ["unchecked"]
 harness = false

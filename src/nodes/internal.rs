@@ -38,28 +38,24 @@ impl<const D: Udim> Internal<D> {
         let (new_bb, dir) = self.bb.calc_reverse_expand_bb(vc);
 
         (
-            Box::new(Self::new_empty_with_vc_and_bb(
-                new_bb,
-                self.vc.clone(),
-                self.count,
-            )),
+            Self::new_empty_with_vc_and_bb(new_bb, self.vc.clone(), self.count),
             dir,
         )
     }
 
-    pub fn new_empty_with_vc_and_bb(bb: BoundBox<D>, vc: ColVec<D>, count: usize) -> Self {
+    pub fn new_empty_with_vc_and_bb(bb: BoundBox<D>, vc: ColVec<D>, count: usize) -> Box<Self> {
         let parent: Option<(usize, usize)> = None;
         let mut nexts = Vec::with_capacity(Self::DIM_LEN);
         for _ in 0..Self::DIM_LEN {
             nexts.push(None);
         }
-        Self {
+        Box::new(Self {
             bb,
             parent,
             nexts,
             count,
             vc,
-        }
+        })
     }
 
     pub fn new_with_leaf_replacement(

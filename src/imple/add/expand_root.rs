@@ -1,5 +1,5 @@
 use crate::{
-    imple::get_mut_ref_from_arr_mut_ref,
+    imple::{get_mut_ref_from_arr_mut_ref, get_ref_from_arr_ref},
     nodes::{
         Internal,
         NodeIndex::{self, In, Le},
@@ -9,8 +9,8 @@ use crate::{
 
 impl<const D: Udim> BarnesHutTree<D> {
     #[inline]
-    fn expand_struct_bb(&mut self, i: usize) {
-        let vc = &self.vs[i].0;
+    fn expand_struct_bb(&mut self, value_i: usize) {
+        let vc = &get_ref_from_arr_ref(&self.vs, value_i, "For updating struct bb").0;
 
         while !self.bb.is_containing(vc) {
             self.bb.self_expand(vc);

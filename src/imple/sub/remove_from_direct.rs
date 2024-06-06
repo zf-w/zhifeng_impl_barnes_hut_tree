@@ -1,4 +1,7 @@
-use crate::{imple::get_mut_ref_from_arr_mut_ref, BarnesHutTree, Udim};
+use crate::{
+    imple::{get_mut_ref_from_arr_mut_ref, get_ref_from_arr_ref},
+    BarnesHutTree, Udim,
+};
 
 impl<const D: Udim> BarnesHutTree<D> {
     /// # Removing the leaf value from the direct leaf node
@@ -20,10 +23,18 @@ impl<const D: Udim> BarnesHutTree<D> {
     /// If a leaf is holding only one value, we need to cut that leaf from its parent or the root.
     ///
     #[inline]
-    pub(super) fn remove_from_direct_leaf(&mut self, i: usize) -> Option<usize> {
-        let (parent_leaf_i, idx) = self.vs[i].1.expect("We should only remove an added value");
+    pub(super) fn remove_from_direct_leaf(&mut self, value_i: usize) -> Option<usize> {
+        let value_to_leaf_index = &mut get_mut_ref_from_arr_mut_ref(
+            &mut self.vs,
+            value_i,
+            "Breaking the value-to-leaf index parent first",
+        )
+        .1;
+        let (parent_leaf_i, idx) =
+            (*value_to_leaf_index).expect("Value-to-leaf should be valid except during update");
 
-        self.vs[i].1 = None;
+        *value_to_leaf_index = None;
+        let value_info = get_ref_from_arr_ref(&self.vs, value_i, "For future");
 
         let parent_leaf_mut_ref = get_mut_ref_from_arr_mut_ref(
             &mut self.leaf_vec,
@@ -32,7 +43,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         );
 
         if parent_leaf_mut_ref.get_values_num_inside() > 1 {
-            let replaced_leaf_i = parent_leaf_mut_ref.sub_value(idx, &self.vs[i].0);
+            let replaced_leaf_i = parent_leaf_mut_ref.sub_value(idx, &value_info.0);
 
             if replaced_leaf_i > 0 {
                 #[cfg(feature = "unchecked")]

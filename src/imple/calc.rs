@@ -5,6 +5,8 @@ use crate::{
     BarnesHutTree, Fnum, Udim,
 };
 
+use super::get_ref_from_arr_ref;
+
 impl<const D: Udim> BarnesHutTree<D> {
     #[inline]
     pub(crate) fn calc_node<'o, T>(
@@ -19,7 +21,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         match node_box_ref {
             NodeIndex::In(internal_i_ref) => self.calc_neighbour_internal(
                 curr_v_ref,
-                self.internal_vec[*internal_i_ref].as_ref(),
+                get_ref_from_arr_ref(&self.internal_vec, *internal_i_ref, "Calculate internal"),
                 q,
                 write_to,
                 &calc_this,
@@ -27,7 +29,7 @@ impl<const D: Udim> BarnesHutTree<D> {
             ),
             NodeIndex::Le(leaf_i_ref) => self.calc_neighbour_leaf(
                 curr_v_ref,
-                self.leaf_vec[*leaf_i_ref].as_ref(),
+                get_ref_from_arr_ref(&self.leaf_vec, *leaf_i_ref, "Calculate leaf"),
                 write_to,
                 &calc_this,
                 calc_fn,
@@ -75,10 +77,10 @@ impl<const D: Udim> BarnesHutTree<D> {
                 write_to,
             );
         } else {
-            for value_i_ref in leaf_ref.vs.iter() {
+            for value_i in leaf_ref.vs.iter().cloned() {
                 calc_fn(
                     curr_v_ref,
-                    &self.vs[*value_i_ref].0.data,
+                    &get_ref_from_arr_ref(&self.vs, value_i, "Calculating direct in-leaf values due to the current leaf is not far enough").0.data,
                     leaf_ref.get_values_num_inside(),
                     write_to,
                 );
@@ -92,14 +94,32 @@ impl<const D: Udim> BarnesHutTree<D> {
         mut calc_fn: impl FnMut(&[Fnum; D], &[Fnum; D], usize, &mut T),
         write_to: &mut T,
     ) -> Option<(usize, usize)> {
-        let (curr_leaf_i, curr_in_leaf_i) = self.vs[value_i].1.expect("Should always have");
-        let curr_leaf_ref = self.leaf_vec[curr_leaf_i].as_ref();
-        let curr_v_ref = &self.vs[value_i].0.data;
+        let (curr_leaf_i, curr_in_leaf_i) =
+            get_ref_from_arr_ref(&self.vs, value_i, "Getting value")
+                .1
+                .expect(
+                    "A value should always have a parent except during the process of updating",
+                );
+        let curr_leaf_ref = get_ref_from_arr_ref(
+            &self.leaf_vec,
+            curr_leaf_i,
+            "Getting the target value's parent leaf",
+        );
+        let curr_v_ref = &get_ref_from_arr_ref(&self.vs, value_i, "Getting target value")
+            .0
+            .data;
         for (in_leaf_i, other_value_i) in curr_leaf_ref.vs.iter().enumerate() {
             if in_leaf_i == curr_in_leaf_i {
                 continue;
             }
-            calc_fn(curr_v_ref, &self.vs[*other_value_i].0.data, 1, write_to)
+            calc_fn(
+                curr_v_ref,
+                &get_ref_from_arr_ref(&self.vs, *other_value_i, "Getting same-leaf values")
+                    .0
+                    .data,
+                1,
+                write_to,
+            )
         }
         curr_leaf_ref.parent
     }

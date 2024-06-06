@@ -84,11 +84,11 @@ impl<const D: Udim> BarnesHutTree<D> {
         }
 
         if let Some((parent_internal_i, from_dir)) = prev_internal {
-            let parent_internal_mut_ref = self
-                .internal_vec
-                .get_mut(parent_internal_i)
-                .expect("For attaching node")
-                .as_mut();
+            let parent_internal_mut_ref = get_mut_ref_from_arr_mut_ref(
+                &mut self.internal_vec,
+                parent_internal_i,
+                "To attach leaf",
+            );
             let mut leaf_box = Leaf::new_empty_from_parent_dir(
                 parent_internal_mut_ref,
                 parent_internal_i,

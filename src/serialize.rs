@@ -9,7 +9,7 @@ use crate::{
     BarnesHutTree, ColVec, Fnum, Udim,
 };
 
-/// # The serialized form of Barnes Hut Tree
+/// # The half-serialized form of Barnes Hut Tree
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct BarnesHutTreeSer<const D: Udim> {
     dim: usize,
@@ -124,9 +124,9 @@ impl<const D: Udim> BarnesHutTreeSer<D> {
     }
 }
 
-/// # Zhifeng's BHT Serialization Implementation
+/// Serialize the tree into an intermediate form for comparing and further serialization.
 ///
-/// To make the serialization process simpler, I design to let BHT first serialize into the intermediate form `BarnesHutTreeSer` for `serde_json`'s auto "derive" and testing. I guess the `BarnesHutTreeSer` also makes the serialized `JSON` form relatively smaller in size due to less "struct" with "Strings" to represent fields.
+/// To make the serialization process simpler, I design to let thee [BarnesHutTree] first serialize into the intermediate form `BarnesHutTreeSer` for `serde_json`'s auto "derive" and testing. I guess the `BarnesHutTreeSer` also makes the serialized `JSON` form relatively smaller in size due to less "struct" with "Strings" to represent fields.
 impl<const D: Udim> BarnesHutTree<D> {
     pub fn calc_serialized(&self) -> BarnesHutTreeSer<D> {
         let nodes_num = self.get_total_nodes_num();

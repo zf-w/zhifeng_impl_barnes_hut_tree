@@ -43,7 +43,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// ## Example:
     ///
-    /// ```
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -73,12 +73,12 @@ impl<const D: Udim> BarnesHutTree<D> {
 
     ///
     ///  Construct a new Barnes Hut Tree with specified:
-    /// - the initial bounding center and radius (half-width),
+    /// - the initial bounding hypercube center and radius (half-width),
     /// - the estimation of number of values ("bodies") the tree is going to contain,
     ///
     /// ## Example:
     ///
-    /// ```
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -99,13 +99,13 @@ impl<const D: Udim> BarnesHutTree<D> {
     }
 
     /// Construct a new Barnes Hut Tree with specified:
-    /// - the initial bounding center and radius (half-width),
+    /// - the initial bounding hypercube center and radius (half-width),
     /// - the estimation of number of values ("bodies") the tree is going to contain,
     /// - the minimum "radius" (half-width) of the hypercube.
     ///
     /// ## Example:
     ///
-    /// ```
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -147,7 +147,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// ## Example:
     ///
-    /// ```
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -177,7 +177,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     }
 
     /// Construct a new Barnes Hut Tree with specified:
-    /// - the initial bounding center and radius (half-width),
+    /// - the initial bounding hypercube center and radius (half-width),
     /// - the to-insert values (bodies),
     /// - the minimum "radius" (half-width) of the hypercube.
     ///
@@ -219,7 +219,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         temp_self
     }
 
-    /// Calculate force or other custom relationships on a specific value (body).
+    /// Calculate force or custom relationships between selected super nodes on a specific target value (body).
     ///
     /// The function takes:
     /// - an index of the target value
@@ -231,7 +231,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// ## Example:
     ///
-    /// ```
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -241,7 +241,7 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// let mut ans_displacement = [0.0; 2];
     ///
-    /// let is_super_fn = |_: &[f64; 2],_: &[f64; 2],_: f64| -> bool {false}; // If every node is not far enough, the approximation will be the same (but slower due to tree traversal) as looping through all the nodes.
+    /// let is_super_fn = |_: &[f64; 2],_: &[f64; 2],_: f64| -> bool {false}; // If all nodes are not far enough, the approximation will be the same (but slower due to tree traversal) as looping through all the nodes.
     /// let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(1.0, 0.2);
     ///
     /// bht.calc_force_on_value(0, &is_super_fn, &calc_fn, &mut ans_displacement);
@@ -303,21 +303,23 @@ impl<const D: Udim> BarnesHutTree<D> {
 ///
 /// These functions are about getting, pushing, removing, and updating values (bodies) inside the tree.
 impl<const D: Udim> BarnesHutTree<D> {
-    /// Getting a reference of the stored value's coordinates.
+    /// Get a reference of the stored value's coordinates.
     ///
-    ///  # Return
+    /// ## Return
     ///
     /// Returns a reference of the current value (body)'s coordinates if the index is within-range.
     ///
-    /// # Example
-    /// ```
+    /// ## Example
+    ///
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
     ///
     /// let bht: BHTree<2> = BHTree::with_bounding_and_values(&[0.0,0.0],2.0, &[[-1.0,1.0],[1.0,1.0]]);
     ///
-    /// assert_eq!(bht.get(0).unwrap(), &[-1.0,1.0]);
+    /// assert_eq!(bht.get(0), Some(&[-1.0,1.0]));
+    /// assert_eq!(bht.get(2), None);
     /// ```
     pub fn get(&self, value_i: usize) -> Option<&[Fnum; D]> {
         if value_i >= self.vs.len() {
@@ -326,15 +328,17 @@ impl<const D: Udim> BarnesHutTree<D> {
         Some(&self.vs[value_i].0.data)
     }
 
-    /// Pushes a value into the tree.
+    /// Push a value into the tree.
     ///
-    /// # Return
+    /// ## Return
     ///
     /// The function will return the value's corresponding value-index `usize` in the tree.
+    ///
     /// This design is mainly for easier mapping of values in case we want to connect the values with other format of keys, for example, `String` or `usize` that is not filling an entire range from `0..len`.
     ///
-    /// # Example:
-    /// ```
+    /// ## Example:
+    ///
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -344,8 +348,8 @@ impl<const D: Udim> BarnesHutTree<D> {
     /// bht.push(&[-1.0,1.0]);
     /// let idx = bht.push(&[1.0,1.0]);
     ///
-    /// assert_eq!(bht.get(0).unwrap(), &[-1.0,1.0]);
-    /// assert_eq!(bht.get(idx).unwrap(), &[1.0,1.0]);
+    /// assert_eq!(bht.get(0), Some(&[-1.0,1.0]));
+    /// assert_eq!(bht.get(idx), Some(&[1.0,1.0]));
     /// ```
     pub fn push(&mut self, value_ref: &[Fnum; D]) -> usize {
         let value_i = self.vs.len();
@@ -358,12 +362,12 @@ impl<const D: Udim> BarnesHutTree<D> {
 
     /// Update the coordinates of a value.
     ///
-    /// # Return
+    /// ## Return
     ///
     /// A boolean indicating whether the update is successful. The update will usually be successful if the value-index is pointing to a valid value.
     ///
-    /// # Example
-    /// ```
+    /// ## Example
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -375,8 +379,8 @@ impl<const D: Udim> BarnesHutTree<D> {
     ///
     /// bht.update(0, &[-1.0,1.0]);
     ///
-    /// assert_eq!(bht.get(0).unwrap(), &[-1.0,1.0]);
-    /// assert_eq!(bht.get(idx).unwrap(), &[1.0,1.0]);
+    /// assert_eq!(bht.get(0), Some(&[-1.0,1.0]));
+    /// assert_eq!(bht.get(idx), Some(&[1.0,1.0]));
     /// ```
     pub fn update(&mut self, value_i: usize, value_ref: &[Fnum; D]) -> bool {
         let len = self.vs.len();
@@ -393,14 +397,14 @@ impl<const D: Udim> BarnesHutTree<D> {
         true
     }
 
-    /// Remove a value from the tree.
+    /// Remove a value (body) from the tree.
     ///
-    /// # Return
+    /// ## Return
     ///
     /// Since the underlying structure uses `vec` to store nodes, if a value that is not the last one in the `vec` needs to be removed, the last value from the `vec` will replace its position. The function returns an option of an index `usize` to indicate which value was moved to that position to replace the removed one (always the previous last one). If the to-remove value is the last one, or the index is out-of-range, the function will return a `None`.
     ///
-    /// # Example
-    /// ```
+    /// ## Example
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;
@@ -410,10 +414,11 @@ impl<const D: Udim> BarnesHutTree<D> {
     /// bht.push(&[-0.5,1.0]);
     /// bht.push(&[1.0,1.0]);
     ///
-    /// let old_i = bht.remove(0).unwrap();
+    /// let old_i = bht.remove(0);
     ///
-    /// assert_eq!(old_i, 1);
+    /// assert_eq!(old_i, Some(1));
     /// assert_eq!(bht.get(0).unwrap(), &[1.0,1.0]);
+    /// assert_eq!(bht.remove(1), None);
     /// ```
     pub fn remove(&mut self, value_i: usize) -> Option<usize> {
         let last_i = self.vs.len() - 1;
@@ -455,12 +460,13 @@ impl<const D: Udim> BarnesHutTree<D> {
 
     /// Get the total number of nodes
     ///
-    /// # Return
+    /// ## Return
     ///
     /// The total number of tree nodes.
     ///
-    /// # Example
-    /// ```
+    /// ## Example
+    ///
+    /// ```rust
     /// use zhifeng_impl_barnes_hut_tree as zbht;
     ///
     /// use zbht::BarnesHutTree as BHTree;

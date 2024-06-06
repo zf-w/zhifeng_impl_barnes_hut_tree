@@ -1,22 +1,30 @@
 use crate::{BarnesHutTree, Udim};
 
+use super::{get_mut_ref_from_arr_mut_ref, get_ref_from_arr_ref};
+
 mod remove_from_direct;
 
 mod drop_one_child_nodes;
 
 impl<const D: Udim> BarnesHutTree<D> {
     fn sub_value_util_root(&mut self, internal_i: usize, value_i: usize) {
-        let mut curr_internal_mut_ref_opt =
-            Some(self.internal_vec.get_mut(internal_i).unwrap().as_mut());
+        let mut curr_internal_mut_ref_opt = Some(get_mut_ref_from_arr_mut_ref(
+            &mut self.internal_vec,
+            internal_i,
+            "Getting the first more-than-1-child internal to start",
+        ));
 
-        let to_sub_v_ref = &self.vs[value_i].0;
+        let to_sub_v_ref = &get_ref_from_arr_ref(&self.vs, value_i, "Getting the to-sub value").0;
 
         while let Some(curr_internal_mut_ref) = curr_internal_mut_ref_opt {
             curr_internal_mut_ref.sub_value(to_sub_v_ref);
 
             if let Some((parent_i, _)) = curr_internal_mut_ref.parent {
-                curr_internal_mut_ref_opt =
-                    Some(self.internal_vec.get_mut(parent_i).unwrap().as_mut())
+                curr_internal_mut_ref_opt = Some(get_mut_ref_from_arr_mut_ref(
+                    &mut self.internal_vec,
+                    parent_i,
+                    "Tracking back to sub value from parents",
+                ))
             } else {
                 curr_internal_mut_ref_opt = None;
             }
