@@ -15,6 +15,7 @@ description = "This crate implements Barns-Hut Tree for accelerated N-body force
 keywords = ["Barnes-Hut Tree"]
 license = "AGPL-3.0-only"
 readme = "ReadMe.md"
+repository = "https://github.com/zf-w/zhifeng_impl_barnes_hut_tree/"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

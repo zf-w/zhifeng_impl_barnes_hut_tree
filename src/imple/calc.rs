@@ -46,7 +46,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         calc_this: impl Fn(&[Fnum; D], &[Fnum; D], Fnum) -> bool,
         mut calc_fn: impl FnMut(&[Fnum; D], &[Fnum; D], usize, &mut T),
     ) {
-        if calc_this(curr_v_ref, &internal_ref.bb.bc.data, internal_ref.bb.br) {
+        if calc_this(curr_v_ref, &internal_ref.vc.data, internal_ref.bb.br) {
             calc_fn(
                 curr_v_ref,
                 &internal_ref.vc.data,
@@ -69,7 +69,7 @@ impl<const D: Udim> BarnesHutTree<D> {
         calc_this: impl Fn(&[Fnum; D], &[Fnum; D], Fnum) -> bool,
         calc_fn: impl Fn(&[Fnum; D], &[Fnum; D], usize, &mut T),
     ) {
-        if calc_this(curr_v_ref, &leaf_ref.bb.bc.data, leaf_ref.bb.br) {
+        if calc_this(curr_v_ref, &leaf_ref.vc.data, leaf_ref.bb.br) {
             calc_fn(
                 curr_v_ref,
                 &leaf_ref.vc.data,

@@ -2,11 +2,15 @@
 //!
 //! This module provides some implementations of repulsive displacement and energy calculation function factories.
 //!
-//! The output closures, from the factory functions, are from Hu, Y. (2005). Efficient, high-quality force-directed graph drawing. _Mathematica journal, 10_(1), 37-71, mentioned in the main page of the crate. These functions are designed for calculating the repulsive forces and, via force simulation, finding nice graph node positions.
+//! The output closures from the factory functions are from Hu, Y. (2005). Efficient, high-quality force-directed graph drawing. _Mathematica journal, 10_(1), 37-71, mentioned on the main page of the crate. These functions are designed to calculate the repulsive forces and, via force simulation, find nice graph node positions.
+//!
+//! ## When a distance gets too close
+//!
+//! If a distance falls under `1e-8`, the closure will use `1e-8` to proceed with the calculations.
 
 use crate::{Fnum, Udim};
 
-const DEFAULT_MIN_DIS: Fnum = 1e-9;
+const DEFAULT_MIN_DIS: Fnum = 1e-8;
 
 fn calc_v0_to_v1_diff<const D: Udim>(v0: &[Fnum; D], v1: &[Fnum; D]) -> [Fnum; D] {
     let mut ans = [0.0; D];
@@ -24,15 +28,35 @@ fn calc_sum_of_squared<const D: Udim>(v: &[Fnum; D]) -> Fnum {
     ans_f64
 }
 
-/// # Factory of Repulsive Displacement Calculation Function
+/// This function is the factory of the repulsive displacement calculation function.
 ///
-/// The function returns a closure defined by parameter `k` and `c`.
+/// The function returns a closure defined by parameters `k` and `c`.
 ///
 /// The returned closure takes the position of the target value, the mean position of a group of values, the size of the group, and the to-calculate answer's mutable reference.
 ///
 /// The returned closure updates the third argument representing the answer displacement when calling it with the position of the target value, the average position of the values, and the number of values of a "far" super node.
 ///
 /// The repulsive force between the target value and the super node is the number of values contained in the super node times `c` and the square of `k` divided by the distance between the value and the average center of the values in the super node. The repulsive displacement in one update is, therefore, the force times the direction of the super node to the target value, which is the vector of target value minus super node value center times the number of values contained in the super node times `c` and square of `k` divided by the distance squared.
+///
+/// ## Example
+///
+/// ```rust
+/// use zhifeng_impl_barnes_hut_tree as zbht;
+///
+/// let k = 1.0;
+/// let c = 0.2;
+///
+/// let calc_fn = zbht::utils::factory_of_repulsive_displacement_calc_fn::<2>(k, c);
+///
+/// let mut ans_displacement = [0.0;2];
+/// calc_fn(&[-1.0,0.0],&[1.0,0.0],1, &mut ans_displacement);
+///
+/// let diff = -2.0;
+/// let dis = 2.0;
+///
+/// assert_eq!(ans_displacement, [(diff * k * k * c) / (dis * dis), 0.0]);
+/// ```
+///
 pub fn factory_of_repulsive_displacement_calc_fn<const D: Udim>(
     k: Fnum,
     c: Fnum,
@@ -55,11 +79,35 @@ pub fn factory_of_repulsive_displacement_calc_fn<const D: Udim>(
     }
 }
 
-/// # Factory of Repulsive Displacement and Energy Calculation Function
+///
+/// This function is the factory of the repulsive displacement and energy calculation function.
 ///
 /// The function returns a closure defined by parameter `k` and `c`.
 ///
-/// In addition to the previous function [factory_of_repulsive_displacement_calc_fn], this returned closure also updates the "energy", the sum of squared forces on the target value.
+/// In addition to the previous function [factory_of_repulsive_displacement_calc_fn], this function's returned closure also updates the "energy", the sum of squared forces on the target value.
+///
+/// ## Example
+///
+/// ```rust
+/// use zhifeng_impl_barnes_hut_tree as zbht;
+///
+/// let k = 1.0;
+/// let c = 0.2;
+///
+/// let calc_fn = zbht::utils::factory_of_repulsive_displacement_with_energy_calc_fn::<2>(k, c);
+///
+/// let mut ans_displacement_and_energy = ([0.0;2],0.0);
+///
+/// let super_node_size = 1;
+///
+/// calc_fn(&[-1.0,0.0],&[1.0,0.0],super_node_size, &mut ans_displacement_and_energy);
+///
+/// let diff: f64 = -2.0;
+/// let dis: f64 = 2.0;
+///
+/// assert_eq!(ans_displacement_and_energy, ([(diff * k * k * c) / (dis * dis), 0.0],(super_node_size as f64 * k * k * c).powi(2) / (dis.powi(2))));
+/// ```
+///
 pub fn factory_of_repulsive_displacement_with_energy_calc_fn<const D: Udim>(
     k: Fnum,
     c: Fnum,
@@ -84,9 +132,24 @@ pub fn factory_of_repulsive_displacement_with_energy_calc_fn<const D: Udim>(
     }
 }
 
-/// # Factory of Is Super Node Function
 ///
-/// The function returns a closure defined by parameter `theta`. The closure will return `true` if the width of a super cube divided by the distance between the current value and the average position of values in the super node is less than `theta.`
+/// This function is the factory of is-super-dode(is far enough) function.
+///
+/// This function returns a closure defined by parameter `theta`. The closure will return `true` if the width of a super cube divided by the distance between the current value and the average position of values in the super node is less than `theta.`
+///
+/// ## Example
+///
+/// ```rust
+/// use zhifeng_impl_barnes_hut_tree as zbht;
+///
+/// let theta = 1.2;
+///
+/// let is_super_fn = zbht::utils::factory_of_is_super_node_fn::<2>(theta);
+///
+/// let half_width = 5.0;
+/// let dis = 5.0;
+/// assert_eq!(is_super_fn(&[0.0,0.0],&[4.0,3.0], half_width), (2.0 * half_width / dis) <= theta);
+/// ```
 ///
 pub fn factory_of_is_super_node_fn<const D: Udim>(
     theta: Fnum,
