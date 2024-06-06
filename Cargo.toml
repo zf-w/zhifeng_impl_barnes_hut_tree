@@ -7,7 +7,8 @@ include = [
     "src/**",
     "tests/**",
     "**/ReadMe.md",
-    "License.txt"
+    "License.txt",
+    "/.gitignore"
 ]
 authors = ["Zhifeng Wang"]
 categories = ["data-structures"]
